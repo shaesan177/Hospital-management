@@ -1,0 +1,208 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import Layout from '../components/Layout';
+
+const Employees: React.FC = () => {
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    registerId: '',
+    department: 'CARDIOLOGY',
+    designation: '',
+    status: 'ON-DUTY',
+    fatherName: '',
+    sex: 'Male'
+  });
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/employees');
+      const data = await response.json();
+      setEmployees(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:5000/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (response.ok) {
+        setIsModalOpen(false);
+        fetchEmployees();
+        setFormData({
+          name: '',
+          email: '',
+          registerId: '',
+          department: 'CARDIOLOGY',
+          designation: '',
+          status: 'ON-DUTY',
+          fatherName: '',
+          sex: 'Male'
+        });
+      }
+    } catch (error) {
+      console.error('Error adding employee:', error);
+    }
+  };
+
+  return (
+    <Layout title="Employee Management" searchPlaceholder="Search employee by names.. , id or department">
+      <div className="space-y-6">
+        {/* Top Banner */}
+        <div className="bg-[#003896] rounded-2xl p-8 text-white flex justify-between items-center shadow-lg shadow-[#003896]/10">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold mb-1">Employee Directory</h1>
+              <p className="text-white/70 text-sm font-medium">Managing {employees.length} Active Medical & Administrative Staff</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-center px-6 border-r border-white/20">
+              <span className="text-[10px] font-bold text-white/50 block tracking-widest uppercase mb-1">TOTAL ON-DUTY</span>
+              <span className="text-2xl font-bold">{employees.filter(e => e.status === 'ON-DUTY').length}</span>
+            </div>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-white text-[#003896] px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+            >
+              + Add New Employee
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Bar and Table remain similar, but use dynamic data */}
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Employee Name</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Register ID</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Designation</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">View Profile</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr><td colSpan={6} className="text-center py-10 text-slate-400">Loading staff members...</td></tr>
+              ) : employees.map((emp, i) => (
+                <tr key={emp._id || i} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">{emp.name}</div>
+                        <div className="text-[10px] font-medium text-slate-400">{emp.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-bold text-slate-600">{emp.registerId}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-3 py-1 bg-blue-50 text-[#003896] rounded-md text-[10px] font-bold">{emp.department}</span>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                    {emp.designation}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full animate-pulse ${emp.status === 'ON-DUTY' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                      <span className={`text-[10px] font-bold tracking-wide uppercase ${emp.status === 'ON-DUTY' ? 'text-emerald-600' : 'text-red-600'}`}>{emp.status}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Link to={`/employee-profile/${emp._id}`} className="text-xs font-bold text-[#003896] hover:underline">View Profile</Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Add Employee Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+              <div className="bg-[#003896] p-6 text-white flex justify-between items-center">
+                <h2 className="text-xl font-bold">Register New Employee</h2>
+                <button onClick={() => setIsModalOpen(false)} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <form onSubmit={handleSubmit} className="p-8 grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                  <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. Dr. Jane Doe" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                  <input required type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="jane@hms.com" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Register ID</label>
+                  <input required name="registerId" value={formData.registerId} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="HMS-REG-XXXX" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</label>
+                  <select name="department" value={formData.department} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium">
+                    <option>CARDIOLOGY</option>
+                    <option>NEUROLOGY</option>
+                    <option>NURSING</option>
+                    <option>ADMIN</option>
+                    <option>TECHNICAL</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Designation</label>
+                  <input required name="designation" value={formData.designation} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. Senior Consultant" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Father's Name</label>
+                  <input name="fatherName" value={formData.fatherName} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="Father's Name" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sex</label>
+                  <select name="sex" value={formData.sex} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium">
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div className="col-span-2 flex gap-4 pt-4">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                  <button type="submit" className="flex-1 px-6 py-3 bg-[#003896] text-white rounded-xl font-bold hover:bg-[#002d7a] transition-colors shadow-lg shadow-[#003896]/20">Register Staff</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+export default Employees;
