@@ -3,13 +3,12 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Admin from './pages/Admin'
 import Employees from './pages/Employees'
-import EmployeeProfile from './pages/EmployeeProfile'
-
 import Attendance from './pages/Attendance'
 import Overtime from './pages/Overtime'
 import Holidays from './pages/Holidays'
 import Payroll from './pages/Payroll'
 import Reports from './pages/Reports'
+import EmployeeProfile from './pages/EmployeeProfile'
 
 function App() {
   return (

@@ -6,6 +6,8 @@ const Employees: React.FC = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -38,14 +40,68 @@ const Employees: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const openAddModal = () => {
+    setIsEditing(false);
+    setEditingId(null);
+    setFormData({
+      name: '',
+      email: '',
+      registerId: '',
+      department: 'CARDIOLOGY',
+      designation: '',
+      status: 'ON-DUTY',
+      fatherName: '',
+      sex: 'Male'
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (emp: any) => {
+    setIsEditing(true);
+    setEditingId(emp._id);
+    setFormData({
+      name: emp.name,
+      email: emp.email,
+      registerId: emp.registerId,
+      department: emp.department,
+      designation: emp.designation,
+      status: emp.status,
+      fatherName: emp.fatherName || '',
+      sex: emp.sex || 'Male'
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this employee?')) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+          method: 'DELETE'
+        });
+        if (response.ok) {
+          fetchEmployees();
+        }
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/employees', {
-        method: 'POST',
+      const url = isEditing 
+        ? `http://localhost:5000/api/employees/${editingId}`
+        : 'http://localhost:5000/api/employees';
+      
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
+
       if (response.ok) {
         setIsModalOpen(false);
         fetchEmployees();
@@ -61,7 +117,7 @@ const Employees: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Error adding employee:', error);
+      console.error(`Error ${isEditing ? 'updating' : 'adding'} employee:`, error);
     }
   };
 
@@ -85,7 +141,7 @@ const Employees: React.FC = () => {
               <span className="text-2xl font-bold">{employees.filter(e => e.status === 'ON-DUTY').length}</span>
             </div>
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={openAddModal}
               className="bg-white text-[#003896] px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
             >
               + Add New Employee
@@ -93,7 +149,7 @@ const Employees: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter Bar and Table remain similar, but use dynamic data */}
+        {/* Filter Bar and Table */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-slate-50 border-b border-slate-100">
@@ -103,14 +159,14 @@ const Employees: React.FC = () => {
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Designation</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">View Profile</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr><td colSpan={6} className="text-center py-10 text-slate-400">Loading staff members...</td></tr>
               ) : employees.map((emp, i) => (
-                <tr key={emp._id || i} className="hover:bg-slate-50 transition-colors">
+                <tr key={emp._id || i} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div>
@@ -135,7 +191,17 @@ const Employees: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Link to={`/employee-profile/${emp._id}`} className="text-xs font-bold text-[#003896] hover:underline">View Profile</Link>
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Link to={`/employee-profile/${emp._id}`} title="View Profile" className="p-2 text-slate-400 hover:text-[#003896] transition-colors">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </Link>
+                      <button onClick={() => openEditModal(emp)} title="Edit Employee" className="p-2 text-slate-400 hover:text-amber-500 transition-colors">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button onClick={() => handleDelete(emp._id)} title="Delete Employee" className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -143,12 +209,12 @@ const Employees: React.FC = () => {
           </table>
         </div>
 
-        {/* Add Employee Modal */}
+        {/* Add/Edit Employee Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
               <div className="bg-[#003896] p-6 text-white flex justify-between items-center">
-                <h2 className="text-xl font-bold">Register New Employee</h2>
+                <h2 className="text-xl font-bold">{isEditing ? 'Edit Employee Profile' : 'Register New Employee'}</h2>
                 <button onClick={() => setIsModalOpen(false)} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
                   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
@@ -192,9 +258,19 @@ const Employees: React.FC = () => {
                     <option>Other</option>
                   </select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</label>
+                  <select name="status" value={formData.status} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium">
+                    <option>ON-DUTY</option>
+                    <option>OFF-DUTY</option>
+                    <option>ON-LEAVE</option>
+                  </select>
+                </div>
                 <div className="col-span-2 flex gap-4 pt-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-                  <button type="submit" className="flex-1 px-6 py-3 bg-[#003896] text-white rounded-xl font-bold hover:bg-[#002d7a] transition-colors shadow-lg shadow-[#003896]/20">Register Staff</button>
+                  <button type="submit" className="flex-1 px-6 py-3 bg-[#003896] text-white rounded-xl font-bold hover:bg-[#002d7a] transition-colors shadow-lg shadow-[#003896]/20">
+                    {isEditing ? 'Save Changes' : 'Register Staff'}
+                  </button>
                 </div>
               </form>
             </div>
