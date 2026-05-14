@@ -1,9 +1,126 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Layout from '../components/Layout';
 
 const Attendance: React.FC = () => {
+  const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
+  
+  // Helpers to convert between 12h (backend) and 24h (input type="time")
+  const formatTimeTo12h = (time24: string) => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':');
+    let h = parseInt(hours);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12;
+    return `${h.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+  };
+
+  const formatTimeForInput = (time12h: string) => {
+    if (!time12h || time12h === '—' || time12h === 'Pending') return '';
+    const parts = time12h.split(' ');
+    if (parts.length !== 2) return '';
+    const [time, modifier] = parts;
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = (parseInt(hours, 10) + 12).toString();
+    return `${hours.padStart(2, '0')}:${minutes}`;
+  };
+
+  // Form State
+  const [formData, setFormData] = useState({
+    employeeId: '',
+    natureOfWork: '',
+    entryTime: '',
+    exitTime: '',
+    rest: '',
+    status: 'PRESENT'
+  });
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:5000/api/attendance?date=${selectedDate}`);
+      const data = await response.json();
+      setAttendanceData(data);
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [selectedDate]);
+
+  const departments = useMemo(() => {
+    const depts = new Set(attendanceData.map(item => item.employee.department));
+    return ['All Departments', ...Array.from(depts)];
+  }, [attendanceData]);
+
+  const filteredData = useMemo(() => {
+    return attendanceData.filter(item => {
+      const matchesSearch = item.employee.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           item.employee.registerId.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesDept = selectedDepartment === 'All Departments' || item.employee.department === selectedDepartment;
+      return matchesSearch && matchesDept;
+    });
+  }, [attendanceData, searchQuery, selectedDepartment]);
+
+  const stats = useMemo(() => {
+    const total = attendanceData.length;
+    const present = attendanceData.filter(item => item.status === 'PRESENT').length;
+    const absent = attendanceData.filter(item => item.status === 'ABSENT').length;
+    const rate = total > 0 ? ((present / total) * 100).toFixed(1) : '0';
+    return { total, present, absent, rate };
+  }, [attendanceData]);
+
+  const handleManualEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.employeeId) {
+      alert('Please select an employee');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          entryTime: formatTimeTo12h(formData.entryTime),
+          exitTime: formatTimeTo12h(formData.exitTime),
+          date: selectedDate
+        })
+      });
+
+      if (response.ok) {
+        alert('Attendance updated successfully');
+        fetchData(); // Refresh data
+        setFormData({
+          employeeId: '',
+          natureOfWork: '',
+          entryTime: '',
+          exitTime: '',
+          rest: '',
+          status: 'PRESENT'
+        });
+      } else {
+        const err = await response.json();
+        alert(err.message || 'Failed to update attendance');
+      }
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      alert('Error updating attendance');
+    }
+  };
+
   return (
-    <Layout title="GOMATHY SPECIALITY" searchPlaceholder="Search employee or records...">
+    <Layout title="GOMATHY SPECIALITY" searchPlaceholder="Search employee or records..." onSearch={setSearchQuery}>
       <div className="space-y-8 pb-12">
         {/* Attendance Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -18,13 +135,24 @@ const Attendance: React.FC = () => {
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Date</label>
               <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg min-w-[180px]">
                 <CalendarIcon />
-                <input type="text" defaultValue="10/27/2023" className="text-sm font-medium outline-none w-full" />
+                <input 
+                  type="date" 
+                  value={selectedDate} 
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="text-sm font-medium outline-none w-full bg-transparent" 
+                />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</label>
-              <select className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg min-w-[180px] text-sm font-medium outline-none appearance-none">
-                <option>All Departments</option>
+              <select 
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg min-w-[180px] text-sm font-medium outline-none appearance-none"
+              >
+                {departments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
               </select>
             </div>
             <button className="flex items-center gap-2 px-6 py-2 bg-[#003896] text-white rounded-lg text-sm font-bold h-[42px] hover:bg-[#002d7a] transition-colors">
@@ -38,24 +166,23 @@ const Attendance: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
             title="TOTAL WORKERS" 
-            value="1,248" 
-            subValue="+4% from yesterday" 
-            subValueColor="text-emerald-500"
-            trendIcon={<TrendingUpIcon />}
+            value={stats.total} 
+            subValue="Across all departments" 
+            subValueColor="text-slate-400"
             icon={<UsersIcon />} 
             iconBg="bg-blue-50 text-[#003896]"
           />
           <StatCard 
             title="PRESENT TODAY" 
-            value="1,182" 
-            subValue="94.7% Attendance rate" 
-            subValueColor="text-slate-400"
+            value={stats.present} 
+            subValue={`${stats.rate}% Attendance rate`} 
+            subValueColor="text-emerald-500"
             icon={<CheckCircleIcon />} 
             iconBg="bg-emerald-50 text-emerald-500"
           />
           <StatCard 
             title="ABSENT/LATE" 
-            value="66" 
+            value={stats.absent} 
             subValue="Requires follow-up" 
             subValueColor="text-red-500"
             icon={<AlertIcon />} 
@@ -63,8 +190,8 @@ const Attendance: React.FC = () => {
           />
           <StatCard 
             title="ACTIVE SHIFTS" 
-            value="482" 
-            subValue="Current morning shift" 
+            value={stats.present} 
+            subValue="Currently on duty" 
             subValueColor="text-slate-400"
             icon={<ClockIcon />} 
             iconBg="bg-slate-50 text-slate-400"
@@ -95,85 +222,32 @@ const Attendance: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <TableRow 
-                  name="kumaran" 
-                  id="#WL-4921" 
-                  avatar="RJ"
-                  avatarColor="bg-slate-100 text-slate-500"
-                  fatherName="Suresh Kumar" 
-                  sex="Male" 
-                  nature="Technician" 
-                  entry="08:00 AM" 
-                  exit="04:30 PM" 
-                  rest="60 min" 
-                  status="PRESENT" 
-                />
-                <TableRow 
-                  name="chithrakala" 
-                  id="#WL-5012" 
-                  avatar="AS"
-                  avatarColor="bg-slate-100 text-slate-500"
-                  fatherName="Kamaraj" 
-                  sex="Female" 
-                  nature="Ward Assistant" 
-                  entry="08:15 AM" 
-                  exit="04:45 PM" 
-                  rest="45 min" 
-                  status="PRESENT" 
-                />
-                <TableRow 
-                  name="Hari" 
-                  id="#WL-3812" 
-                  avatar="MS"
-                  avatarColor="bg-blue-50 text-[#003896]"
-                  fatherName="Dev Sharma" 
-                  sex="Male" 
-                  nature="Security" 
-                  entry="—" 
-                  exit="—" 
-                  rest="—" 
-                  status="ABSENT" 
-                />
-                <TableRow 
-                  name="Shruthi" 
-                  id="#WL-9201" 
-                  avatar="PD"
-                  avatarColor="bg-slate-100 text-slate-500"
-                  fatherName="Radha Krishnan" 
-                  sex="Female" 
-                  nature="Cleaner" 
-                  entry="07:55 AM" 
-                  exit="04:00 PM" 
-                  rest="30 min" 
-                  status="PRESENT" 
-                />
-                <TableRow 
-                  name="Naveen" 
-                  id="#WL-2283" 
-                  avatar="AK"
-                  avatarColor="bg-slate-100 text-slate-500"
-                  fatherName="Radha Krishnan" 
-                  sex="Male" 
-                  nature="Security" 
-                  entry="08:05 AM" 
-                  exit="Pending" 
-                  rest="45 min" 
-                  status="PRESENT" 
-                />
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-8 text-center text-slate-500 font-medium">Loading attendance records...</td>
+                  </tr>
+                ) : filteredData.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-8 text-center text-slate-500 font-medium">No records found</td>
+                  </tr>
+                ) : filteredData.map((record) => (
+                  <TableRow 
+                    key={record.employee._id}
+                    name={record.employee.name} 
+                    id={record.employee.registerId} 
+                    avatar={record.employee.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                    avatarColor="bg-slate-100 text-slate-500"
+                    fatherName={record.employee.fatherName || '—'} 
+                    sex={record.employee.sex || '—'} 
+                    nature={record.natureOfWork} 
+                    entry={record.entryTime} 
+                    exit={record.exitTime} 
+                    rest={record.rest} 
+                    status={record.status} 
+                  />
+                ))}
               </tbody>
             </table>
-          </div>
-          <div className="p-6 bg-white border-t border-slate-100 flex justify-between items-center text-sm">
-            <span className="text-slate-500">Showing 1 to 5 of 1,248 workers</span>
-            <div className="flex gap-1">
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400"><ChevronLeftIcon /></button>
-              <button className="w-8 h-8 flex items-center justify-center rounded bg-[#003896] text-white">1</button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50">2</button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50">3</button>
-              <span className="px-2">...</span>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50">250</button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400"><ChevronRightIcon /></button>
-            </div>
           </div>
         </div>
 
@@ -183,61 +257,109 @@ const Attendance: React.FC = () => {
             <h3 className="text-xl font-bold text-slate-900 mb-1">Manual Attendance Entry</h3>
             <p className="text-slate-500 text-sm mb-8">Quickly log attendance for workers without digital badges.</p>
             
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleManualEntry} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Worker Search</label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><SearchIconSmall /></div>
-                  <input 
-                    type="text" 
-                    placeholder="Enter name or ID..." 
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
-                  />
-                </div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Worker</label>
+                <select 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
+                  value={formData.employeeId}
+                  onChange={(e) => {
+                    const empId = e.target.value;
+                    const emp = attendanceData.find(item => item.employee._id === empId);
+                    setFormData({
+                      ...formData,
+                      employeeId: empId,
+                      natureOfWork: emp ? emp.natureOfWork : '',
+                      entryTime: emp ? formatTimeForInput(emp.entryTime) : '',
+                      exitTime: emp ? formatTimeForInput(emp.exitTime) : '',
+                      rest: emp ? (emp.rest === '—' ? '' : emp.rest) : '',
+                      status: emp ? emp.status : 'PRESENT'
+                    });
+                  }}
+                  required
+                >
+                  <option value="">Select an employee...</option>
+                  {attendanceData.map(item => (
+                    <option key={item.employee._id} value={item.employee._id}>
+                      {item.employee.name} ({item.employee.registerId})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nature of Work</label>
-                <select className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm">
-                  <option>Select Work Category</option>
-                </select>
+                <input 
+                  type="text" 
+                  value={formData.natureOfWork}
+                  onChange={(e) => setFormData({...formData, natureOfWork: e.target.value})}
+                  placeholder="e.g. Technician, Ward Assistant" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Entry Time</label>
                 <input 
-                  type="text" 
-                  placeholder="--:-- --" 
+                  type="time" 
+                  value={formData.entryTime}
+                  onChange={(e) => setFormData({...formData, entryTime: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Exit Time</label>
                 <input 
-                  type="text" 
-                  placeholder="--:-- --" 
+                  type="time" 
+                  value={formData.exitTime}
+                  onChange={(e) => setFormData({...formData, exitTime: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
                 />
               </div>
-              <div className="md:col-span-2 space-y-2">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rest (min)</label>
+                <input 
+                  type="text" 
+                  value={formData.rest}
+                  onChange={(e) => setFormData({...formData, rest: e.target.value})}
+                  placeholder="60 min" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
+                />
+              </div>
+              <div className="space-y-2">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Attendance Status</label>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6 h-[50px]">
                   <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="radio" name="status" className="hidden" defaultChecked />
+                    <input 
+                      type="radio" 
+                      name="status" 
+                      className="hidden" 
+                      checked={formData.status === 'PRESENT'} 
+                      onChange={() => setFormData({...formData, status: 'PRESENT'})}
+                    />
                     <div className="w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center group-hover:border-[#003896] transition-colors">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#003896] scale-100 transition-transform"></div>
+                      <div className={`w-2.5 h-2.5 rounded-full bg-[#003896] transition-transform ${formData.status === 'PRESENT' ? 'scale-100' : 'scale-0'}`}></div>
                     </div>
                     <span className="text-sm font-medium text-slate-700">Present</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="radio" name="status" className="hidden" />
+                    <input 
+                      type="radio" 
+                      name="status" 
+                      className="hidden" 
+                      checked={formData.status === 'ABSENT'} 
+                      onChange={() => setFormData({...formData, status: 'ABSENT'})}
+                    />
                     <div className="w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center group-hover:border-[#003896] transition-colors">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#003896] scale-0 transition-transform"></div>
+                      <div className={`w-2.5 h-2.5 rounded-full bg-[#003896] transition-transform ${formData.status === 'ABSENT' ? 'scale-100' : 'scale-0'}`}></div>
                     </div>
                     <span className="text-sm font-medium text-slate-700">Absent</span>
                   </label>
                 </div>
               </div>
               <div className="md:col-span-2 pt-4 flex justify-end">
-                <button className="px-10 py-3 bg-[#003896] text-white rounded-xl text-sm font-bold hover:bg-[#002d7a] transition-colors">
+                <button 
+                  type="submit"
+                  className="px-10 py-3 bg-[#003896] text-white rounded-xl text-sm font-bold hover:bg-[#002d7a] transition-colors"
+                >
                   Update
                 </button>
               </div>

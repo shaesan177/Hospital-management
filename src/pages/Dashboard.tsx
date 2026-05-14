@@ -1,7 +1,52 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
+import axios from 'axios';
 
 const Dashboard: React.FC = () => {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/dashboard/stats');
+        setData(response.data);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout title="Overview Dashboard">
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003896]"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const { stats, attendanceTrend, overtimeAnalytics, upcomingHolidays } = data || {};
+
+  // Map attendance trend to days of week
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const today = new Date();
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(today.getDate() - (6 - i));
+    const dateStr = d.toISOString().split('T')[0];
+    const dayName = days[d.getDay()];
+    const record = attendanceTrend?.find((r: any) => r._id === dateStr);
+    return { day: dayName, count: record ? record.count : 0 };
+  });
+
+  const maxAttendance = Math.max(...last7Days.map(d => d.count), 1);
+
   return (
     <Layout title="Overview Dashboard" searchPlaceholder="Search employees, records, or reports...">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
@@ -24,9 +69,9 @@ const Dashboard: React.FC = () => {
 
         <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard title="TOTAL EMPLOYEES" value="1,248" trend="+2.4% ↑" trendType="up" update="Updated 5m ago" icon={<EmployeesIcon />} />
-            <StatCard title="PRESENT TODAY" value="1,142" trend="92% Rate" trendType="neutral" update="Daily Attendance" icon={<CheckIcon />} iconBg="bg-emerald-50 text-emerald-500" valueColor="text-emerald-500" />
-            <StatCard title="ON LEAVE" value="86" trend="+12 ⚠️" trendType="down" update="Active Requests" icon={<ClockIcon />} iconBg="bg-orange-50 text-orange-500" valueColor="text-orange-500" />
+            <StatCard title="TOTAL EMPLOYEES" value={stats?.totalEmployees || 0} trend="+2.4% ↑" trendType="up" update="Updated just now" icon={<EmployeesIcon />} />
+            <StatCard title="PRESENT TODAY" value={stats?.presentToday || 0} trend={`${Math.round((stats?.presentToday / (stats?.totalEmployees || 1)) * 100)}% Rate`} trendType="neutral" update="Daily Attendance" icon={<CheckIcon />} iconBg="bg-emerald-50 text-emerald-500" valueColor="text-emerald-500" />
+            <StatCard title="ON LEAVE" value={stats?.onLeave || 0} trend="Active Requests" trendType="down" update="Current Status" icon={<ClockIcon />} iconBg="bg-orange-50 text-orange-500" valueColor="text-orange-500" />
           </div>
 
           <div className="bg-white p-6 rounded-2xl border border-slate-200">
@@ -41,21 +86,21 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-end justify-between h-[200px] pt-4">
-              {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day, i) => (
-                <div key={day} className="flex flex-col items-center gap-4 flex-1">
+              {last7Days.map((d, i) => (
+                <div key={i} className="flex flex-col items-center gap-4 flex-1">
                   <div className="w-10 bg-slate-100 rounded-md relative h-[150px] flex items-end">
                     <div 
-                      className={`w-full rounded-md transition-all duration-500 ${day === 'FRI' ? 'bg-[#003896]' : 'bg-slate-100'}`} 
-                      style={{ height: `${[40, 60, 80, 90, 100, 70, 50][i]}%` }}
+                      className={`w-full rounded-md transition-all duration-500 ${i === 6 ? 'bg-[#003896]' : 'bg-slate-200'}`} 
+                      style={{ height: `${(d.count / maxAttendance) * 100}%` }}
                     >
-                      {day === 'FRI' && (
+                      {i === 6 && d.count > 0 && (
                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#003896] text-white px-3 py-1 rounded text-[10px] font-bold whitespace-nowrap">
-                          92% today
+                          {d.count} today
                         </div>
                       )}
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">{day}</span>
+                  <span className="text-[10px] font-bold text-slate-400">{d.day}</span>
                 </div>
               ))}
             </div>
@@ -67,10 +112,13 @@ const Dashboard: React.FC = () => {
               <a href="#" className="text-sm font-bold text-[#003896]">Details</a>
             </div>
             <div className="space-y-6">
-              <OvertimeItem name="Nursing Department" value={184} limit={200} color="bg-red-500" textColor="text-red-500" />
-              <OvertimeItem name="Surgery & Trauma" value={112} limit={200} color="bg-[#003896]" textColor="text-[#003896]" />
-              <OvertimeItem name="Radiology" value={64} limit={200} color="bg-[#003896]" textColor="text-[#003896]" />
-              <OvertimeItem name="Emergency Services" value={52} limit={200} color="bg-[#003896]" textColor="text-[#003896]" />
+              {overtimeAnalytics?.length > 0 ? (
+                overtimeAnalytics.map((item: any, idx: number) => (
+                  <OvertimeItem key={idx} name={item._id} value={item.totalHours} limit={200} color={idx === 0 ? "bg-red-500" : "bg-[#003896]"} textColor={idx === 0 ? "text-red-500" : "text-[#003896]"} />
+                ))
+              ) : (
+                <p className="text-sm text-slate-400">No overtime data available</p>
+              )}
             </div>
           </div>
         </div>
@@ -80,14 +128,24 @@ const Dashboard: React.FC = () => {
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <h3 className="text-sm font-bold">Upcoming Holidays</h3>
+                <h3 className="text-sm font-bold">Upcoming Leaves</h3>
               </div>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Q4 2024</span>
+              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Approved</span>
             </div>
             <div className="space-y-6">
-              <HolidayItem month="DEC" day="25" name="Christmas Day" type="Global Medical Holiday" />
-              <HolidayItem month="JAN" day="01" name="New Year's Day" type="Public Holiday" />
-              <HolidayItem month="FEB" day="14" name="Foundation Day" type="Internal Hospital Holiday" />
+              {upcomingHolidays?.length > 0 ? (
+                upcomingHolidays.map((h: any, idx: number) => (
+                  <HolidayItem 
+                    key={idx} 
+                    month={new Date(h.date).toLocaleString('default', { month: 'short' }).toUpperCase()} 
+                    day={new Date(h.date).getDate().toString()} 
+                    name={h.name} 
+                    type={h.type} 
+                  />
+                ))
+              ) : (
+                <p className="text-sm text-slate-400">No upcoming leaves</p>
+              )}
             </div>
           </div>
         </aside>

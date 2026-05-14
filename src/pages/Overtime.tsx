@@ -1,9 +1,78 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Layout from '../components/Layout';
+import axios from 'axios';
 
 const Overtime: React.FC = () => {
+  const [musterData, setMusterData] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({ totalHours: 0, totalPayout: 0, pendingApprovals: 0 });
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Form State
+  const [formData, setFormData] = useState({
+    employeeId: '',
+    date: new Date().toISOString().split('T')[0],
+    hours: '',
+    task: '',
+    status: 'Pending'
+  });
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [musterRes, statsRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/overtime/muster-roll?month=${selectedMonth}&year=${selectedYear}`),
+        axios.get(`http://localhost:5000/api/overtime/stats?month=${selectedMonth}&year=${selectedYear}`)
+      ]);
+      setMusterData(musterRes.data);
+      setStats(statsRes.data);
+    } catch (error) {
+      console.error('Error fetching overtime data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [selectedMonth, selectedYear]);
+
+  const filteredMusterData = useMemo(() => {
+    return musterData.filter(item => 
+      item.employee.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      item.employee.registerId.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [musterData, searchQuery]);
+
+  const handleApproveAll = async () => {
+    try {
+      await axios.post('http://localhost:5000/api/overtime/approve-all');
+      alert('All pending overtime approved');
+      fetchData();
+    } catch (error) {
+      console.error('Error approving all:', error);
+    }
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post('http://localhost:5000/api/overtime', formData);
+      alert('Overtime updated');
+      fetchData();
+      setFormData({ ...formData, hours: '', task: '' });
+    } catch (error) {
+      console.error('Error updating overtime:', error);
+    }
+  };
+
+  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  const daysArray = Array.from({ length: Math.min(daysInMonth, 7) }, (_, i) => (i + 1).toString().padStart(2, '0')); // Display first 7 days for UI space
+
   return (
-    <Layout title="GOMATHY SPECIALITY" searchPlaceholder="Search functionality...">
+    <Layout title="GOMATHY SPECIALITY" searchPlaceholder="Search functionality..." onSearch={setSearchQuery}>
       <div className="space-y-8 pb-12">
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -18,7 +87,10 @@ const Overtime: React.FC = () => {
               <DownloadIcon />
               Export (Excel)
             </button>
-            <button className="flex items-center gap-2 px-6 py-2.5 bg-[#003896] text-white rounded-lg text-sm font-bold hover:bg-[#002d7a] transition-colors">
+            <button 
+              onClick={handleApproveAll}
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#003896] text-white rounded-lg text-sm font-bold hover:bg-[#002d7a] transition-colors"
+            >
               <CheckDoubleIcon />
               Approve All Pending
             </button>
@@ -32,21 +104,38 @@ const Overtime: React.FC = () => {
             <input
               type="text"
               placeholder="Search by Employee Name or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-[#003896] transition-colors"
             />
           </div>
           <div className="md:col-span-3">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Department</label>
-            <select className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none appearance-none">
-              <option>All Departments</option>
-            </select>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Year Selection</label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><CalendarIconSmall /></div>
+              <select 
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none appearance-none"
+              >
+                {[2024, 2025, 2026].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="md:col-span-3">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Month Selection</label>
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><CalendarIconSmall /></div>
-              <select className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none appearance-none">
-                <option>October 2023</option>
+              <select 
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none appearance-none"
+              >
+                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
+                  <option key={m} value={i}>{m}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -56,7 +145,7 @@ const Overtime: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard
             title="Total OT Hours"
-            value="1,248.5"
+            value={stats.totalHours.toFixed(1)}
             unit="Hrs"
             subValue="+12% from Sept"
             subValueColor="text-emerald-500"
@@ -66,7 +155,7 @@ const Overtime: React.FC = () => {
           />
           <StatCard
             title="Total OT Payout"
-            value="₹32,450"
+            value={`₹${stats.totalPayout.toLocaleString()}`}
             subValue="Estimated for current cycle"
             subValueColor="text-slate-400"
             icon={<WalletIcon />}
@@ -74,7 +163,7 @@ const Overtime: React.FC = () => {
           />
           <StatCard
             title="Pending Approvals"
-            value="42"
+            value={stats.pendingApprovals}
             unit="Items"
             subValue="Requires immediate action"
             subValueColor="text-red-500"
@@ -101,63 +190,26 @@ const Overtime: React.FC = () => {
               <thead className="bg-slate-50/50">
                 <tr>
                   <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-100 w-[300px]">Employee Information</th>
-                  {['01', '02', '03', '04', '05'].map(day => (
+                  {daysArray.map(day => (
                     <th key={day} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-100 text-center">{day}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <MusterRow
-                  name="Shalini"
-                  id="EMP-2041"
-                  role="Nurse Practitioner"
-                  avatar="SM"
-                  days={[
-                    { type: 'regular' },
-                    { type: 'regular' },
-                    { type: 'ot', value: '+4h' },
-                    { type: 'regular' },
-                    { type: 'regular' },
-                  ]}
-                />
-                <MusterRow
-                  name="Prawin"
-                  id="EMP-1192"
-                  role="ER Surgeon"
-                  avatar="JD"
-                  days={[
-                    { type: 'regular' },
-                    { type: 'regular' },
-                    { type: 'pending', value: 'PND' },
-                    { type: 'regular' },
-                    { type: 'ot', value: '+8h' },
-                  ]}
-                />
-                <MusterRow
-                  name="Keerthana"
-                  id="EMP-3055"
-                  role="Radiologist"
-                  avatar="LW"
-                  days={[
-                    { type: 'ot', value: '+2h' },
-                    { type: 'ot', value: '+2h' },
-                    { type: 'ot', value: '+2h' },
-                    { type: 'ot', value: '+2h' },
-                    { type: 'ot', value: '+2h' },
-                  ]}
-                />
+                {loading ? (
+                  <tr><td colSpan={daysArray.length + 1} className="p-10 text-center text-slate-400">Loading muster roll...</td></tr>
+                ) : filteredMusterData.map((item) => (
+                  <MusterRow
+                    key={item.employee._id}
+                    name={item.employee.name}
+                    id={item.employee.registerId}
+                    role={item.employee.designation}
+                    avatar={item.employee.name.charAt(0)}
+                    days={item.dailyOT.slice(0, 7).map((d: any) => d ? { type: d.status === 'Approved' ? 'ot' : 'pending', value: `+${d.hours}h` } : { type: 'regular' })}
+                  />
+                ))}
               </tbody>
             </table>
-          </div>
-          <div className="p-6 bg-white border-t border-slate-100 flex justify-between items-center text-sm">
-            <span className="text-slate-500">Showing 1 to 10 of 248 employees in this department</span>
-            <div className="flex gap-1">
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400"><ChevronLeftIcon /></button>
-              <button className="w-8 h-8 flex items-center justify-center rounded bg-[#003896] text-white font-bold">1</button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold">2</button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold">3</button>
-              <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400"><ChevronRightIcon /></button>
-            </div>
           </div>
         </div>
 
@@ -171,9 +223,9 @@ const Overtime: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                <StatusItem dot="bg-emerald-500" label="Approved for Payout" count="186 Employees" />
-                <StatusItem dot="bg-orange-500" label="Pending Dept Head Approval" count="42 Employees" />
-                <StatusItem dot="bg-red-500" label="Flagged/Rejected" count="20 Employees" />
+                <StatusItem dot="bg-emerald-500" label="Approved for Payout" count={`${musterData.filter(m => m.dailyOT.some((d: any) => d?.status === 'Approved')).length} Employees`} />
+                <StatusItem dot="bg-orange-500" label="Pending Dept Head Approval" count={`${stats.pendingApprovals} Employees`} />
+                <StatusItem dot="bg-red-500" label="Flagged/Rejected" count="0 Employees" />
               </div>
             </div>
           </div>
@@ -182,42 +234,55 @@ const Overtime: React.FC = () => {
             <div className="bg-white rounded-2xl border border-slate-200 p-8">
               <h3 className="text-xl font-bold text-slate-900 mb-8">OverTime Muster Roll Entry</h3>
 
-              <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Worker Search</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><SearchIconSmall /></div>
-                    <input
-                      type="text"
-                      placeholder="Enter name or ID..."
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role</label>
-                  <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm appearance-none">
-                    <option></option>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Worker Selection</label>
+                  <select 
+                    value={formData.employeeId}
+                    onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
+                    required
+                  >
+                    <option value="">Select an employee...</option>
+                    {musterData.map(m => (
+                      <option key={m.employee._id} value={m.employee._id}>{m.employee.name} ({m.employee.registerId})</option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Entry Time</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</label>
                   <input
-                    type="text"
-                    placeholder="--:-- --"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Exit Time</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hours</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={formData.hours}
+                    onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                    placeholder="e.g. 4"
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Task/Reason</label>
                   <input
                     type="text"
-                    placeholder="--:-- --"
+                    value={formData.task}
+                    onChange={(e) => setFormData({ ...formData, task: e.target.value })}
+                    placeholder="Emergency Surgery Support"
                     className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
                   />
                 </div>
                 <div className="md:col-span-2 pt-4 flex justify-end">
-                  <button className="px-12 py-3.5 bg-[#003896] text-white rounded-xl text-sm font-bold hover:bg-[#002d7a] transition-colors">
+                  <button type="submit" className="px-12 py-3.5 bg-[#003896] text-white rounded-xl text-sm font-bold hover:bg-[#002d7a] transition-colors">
                     Update
                   </button>
                 </div>
@@ -319,7 +384,5 @@ const WalletIcon = () => <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none
 const FileAlertIcon = () => <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="18.01" /><line x1="12" y1="12" x2="12" y2="15" /></svg>;
 const TableIcon = () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /></svg>;
 const CheckSmallIcon = () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>;
-const ChevronLeftIcon = () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>;
-const ChevronRightIcon = () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>;
 
 export default Overtime;

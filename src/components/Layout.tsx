@@ -6,9 +6,10 @@ interface LayoutProps {
   title: string;
   searchPlaceholder?: string;
   headerActions?: React.ReactNode;
+  onSearch?: (query: string) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, title, searchPlaceholder = "Search...", headerActions }) => {
+const Layout: React.FC<LayoutProps> = ({ children, title, searchPlaceholder = "Search...", headerActions, onSearch }) => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900">
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-40 w-full">
@@ -16,7 +17,12 @@ const Layout: React.FC<LayoutProps> = ({ children, title, searchPlaceholder = "S
           <h1 className="text-lg font-black text-[#003896] tracking-tight">{title}</h1>
           <div className="flex items-center bg-slate-50 border border-slate-100 px-4 py-2 rounded-lg w-[380px] gap-3 focus-within:border-[#003896] focus-within:bg-white transition-all">
             <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" placeholder={searchPlaceholder} className="bg-transparent border-none outline-none w-full text-sm font-medium" />
+            <input 
+              type="text" 
+              placeholder={searchPlaceholder} 
+              className="bg-transparent border-none outline-none w-full text-sm font-medium" 
+              onChange={(e) => onSearch?.(e.target.value)}
+            />
           </div>
         </div>
         

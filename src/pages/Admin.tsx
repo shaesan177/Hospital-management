@@ -1,7 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
 const Admin: React.FC = () => {
+  const [stats, setStats] = useState({ totalUsers: 0, activeRoles: 0, permissionChanges: 0 });
+  const [roles, setRoles] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, rolesRes, logsRes] = await Promise.all([
+        fetch('http://localhost:5000/api/admin/stats'),
+        fetch('http://localhost:5000/api/admin/roles'),
+        fetch('http://localhost:5000/api/admin/audit-logs')
+      ]);
+
+      const statsData = await statsRes.json();
+      const rolesData = await rolesRes.json();
+      const logsData = await logsRes.json();
+
+      setStats(statsData);
+      setRoles(rolesData);
+      setAuditLogs(logsData);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <Layout title="Admin Control Panel" searchPlaceholder="Search audit logs...">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
@@ -12,9 +44,9 @@ const Admin: React.FC = () => {
 
         <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard title="TOTAL ACTIVE USERS" value="1,284" trend="+2.4% ↑" trendType="up" icon={<UsersIcon />} />
-            <StatCard title="ACTIVE ROLES" value="12" trend="Static" trendType="neutral" icon={<ShieldIcon />} />
-            <StatCard title="PERMISSION CHANGES" value="42" trend="3 Alerts ⚠️" trendType="down" icon={<KeyIcon />} />
+            <StatCard title="TOTAL ACTIVE USERS" value={stats.totalUsers} trend="+2.4% ↑" trendType="up" icon={<UsersIcon />} />
+            <StatCard title="ACTIVE ROLES" value={stats.activeRoles} trend="Static" trendType="neutral" icon={<ShieldIcon />} />
+            <StatCard title="PERMISSION CHANGES" value={stats.permissionChanges} trend="Alerts active" trendType="down" icon={<KeyIcon />} />
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -38,15 +70,22 @@ const Admin: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  <RoleRow name="Super Administrator" color="bg-red-500" users="4" description="Full system access, including financial and security configurations." />
-                  <RoleRow name="Senior Physician" color="bg-blue-500" users="86" description="Medical record oversight, prescription authorization, and staff schedules." />
-                  <RoleRow name="Medical Staff" color="bg-emerald-500" users="412" description="Standard access to patient records, diagnostics, and appointments." />
-                  <RoleRow name="Billing Admin" color="bg-orange-500" users="18" description="Insurance processing, invoicing, and financial reporting modules." />
+                  {loading ? (
+                    <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">Loading roles...</td></tr>
+                  ) : roles.map((role: any) => (
+                    <RoleRow 
+                      key={role._id}
+                      name={role.name.charAt(0).toUpperCase() + role.name.slice(1)} 
+                      color={role.color} 
+                      users={role.users} 
+                      description={role.description} 
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>
             <div className="p-6 bg-slate-50 flex justify-between items-center text-xs font-bold">
-              <span className="text-slate-400">Showing 4 of 12 system roles</span>
+              <span className="text-slate-400">Showing {roles.length} system roles</span>
               <div className="flex gap-2">
                 <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">Previous</button>
                 <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">Next</button>
@@ -62,16 +101,23 @@ const Admin: React.FC = () => {
                 <svg className="w-5 h-5 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 <h3 className="text-sm font-bold">Security Audit Log</h3>
               </div>
-              <button className="text-slate-400 hover:text-slate-600">
+              <button onClick={fetchData} className="text-slate-400 hover:text-slate-600">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
               </button>
             </div>
             <div className="space-y-6">
-              <AuditItem icon={<AlertIcon />} bg="bg-red-50 text-red-500" title="Failed Login Attempt" meta="Admin-12 Account | IP: 192.168.1.104" time="2 mins ago" />
-              <AuditItem icon={<EditIcon />} bg="bg-blue-50 text-blue-500" title="Permission Changed" meta='Role "Staff" modified by Dr. Sarah Smith' time="15 mins ago" />
-              <AuditItem icon={<CheckIcon />} bg="bg-emerald-50 text-emerald-500" title="System Backup Completed" meta="Automated Weekly Backup (Encrypted)" time="1 hour ago" />
-              <AuditItem icon={<UsersIcon />} bg="bg-slate-50 text-slate-500" title="New User Created" meta="Dr. James Wilson (Physician Role)" time="3 hours ago" />
-              <AuditItem icon={<SettingsIcon />} bg="bg-slate-50 text-slate-500" title="API Key Regenerated" meta="Legacy billing service integration" time="5 hours ago" />
+              {loading ? (
+                <p className="text-xs text-slate-400 text-center">Loading logs...</p>
+              ) : auditLogs.map((log: any) => (
+                <AuditItem 
+                  key={log._id}
+                  icon={log.status === 'FAILURE' ? <AlertIcon /> : log.type === 'PERMISSION' ? <EditIcon /> : log.type === 'BACKUP' ? <CheckIcon /> : log.type === 'USER_CREATE' ? <UsersIcon /> : <SettingsIcon />} 
+                  bg={log.status === 'FAILURE' ? 'bg-red-50 text-red-500' : log.status === 'WARNING' ? 'bg-orange-50 text-orange-500' : 'bg-emerald-50 text-emerald-500'} 
+                  title={log.title} 
+                  meta={log.meta} 
+                  time={new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} 
+                />
+              ))}
             </div>
             <button className="w-full mt-8 pt-6 border-t border-slate-100 text-[10px] font-bold text-[#003896] flex items-center justify-center gap-2 hover:opacity-80 transition-opacity">
               View Detailed Security Report <span>→</span>
