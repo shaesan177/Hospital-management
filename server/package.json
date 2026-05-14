@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "seed:leaves": "node seed/seedLeaves.js"
   },
   "dependencies": {
     "express": "^4.18.2",

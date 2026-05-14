@@ -8,6 +8,7 @@ import employeeRoutes from './routes/employeeRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import holidayRoutes from './routes/holidayRoutes.js';
 import overtimeRoutes from './routes/overtimeRoutes.js';
+import leaveRoutes from './routes/leaveRoutes.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/holidays', holidayRoutes);
 app.use('/api/overtime', overtimeRoutes);
+app.use('/api/leaves', leaveRoutes);
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hospital-management';
