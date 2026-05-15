@@ -9,12 +9,21 @@ const Overtime: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
+
+  const hoursArray = [
+    '12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
+    '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
+  ];
 
   // Form State
   const [formData, setFormData] = useState({
     employeeId: '',
     date: new Date().toISOString().split('T')[0],
     hours: '',
+    startTime: '',
+    endTime: '',
     task: '',
     status: 'Pending'
   });
@@ -35,9 +44,22 @@ const Overtime: React.FC = () => {
     }
   };
 
+  const fetchAttendance = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/attendance?date=${selectedDate}`);
+      setAttendanceRecords(response.data);
+    } catch (error) {
+      console.error('Error fetching attendance for timeline:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [selectedDate]);
 
   const filteredMusterData = useMemo(() => {
     return musterData.filter(item => 
@@ -45,6 +67,20 @@ const Overtime: React.FC = () => {
       item.employee.registerId.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [musterData, searchQuery]);
+
+  const getHourFromTime = (timeStr: string) => {
+    if (!timeStr || timeStr === '—' || timeStr === 'Pending' || timeStr === '-' || timeStr === '—') return null;
+    if (timeStr.includes('AM') || timeStr.includes('PM')) {
+      const parts = timeStr.split(' ');
+      const [time, modifier] = parts;
+      let [hours] = time.split(':').map(Number);
+      if (hours === 12) hours = 0;
+      if (modifier === 'PM') hours += 12;
+      return hours;
+    } else {
+      return parseInt(timeStr.split(':')[0]);
+    }
+  };
 
   const handleApproveAll = async () => {
     try {
@@ -62,7 +98,7 @@ const Overtime: React.FC = () => {
       await axios.post('http://localhost:5000/api/overtime', formData);
       alert('Overtime updated');
       fetchData();
-      setFormData({ ...formData, hours: '', task: '' });
+      setFormData({ ...formData, hours: '', task: '', startTime: '', endTime: '' });
     } catch (error) {
       console.error('Error updating overtime:', error);
     }
@@ -179,10 +215,11 @@ const Overtime: React.FC = () => {
               <div className="p-1.5 bg-blue-50 text-[#003896] rounded-md"><TableIcon /></div>
               <h3 className="text-lg font-bold text-slate-800">Muster Roll Data</h3>
             </div>
-            <div className="flex items-center gap-6">
-              <LegendItem color="bg-emerald-500" label="Regular Shift" icon={<CheckSmallIcon />} />
-              <LegendItem color="bg-blue-500" label="Overtime (+h)" />
-              <LegendItem color="bg-slate-200" label="Holiday/Off" />
+            <div className="flex flex-wrap items-center gap-6">
+              <LegendItem color="bg-emerald-500" label="Regular Shift (Muster)" icon={<CheckSmallIcon />} />
+              <LegendItem color="bg-blue-500" label="OT Record (Muster)" />
+              <LegendItem color="bg-blue-100" label="Regular Time (Timeline)" />
+              <LegendItem color="bg-orange-100" label="Overtime (Timeline)" />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -230,6 +267,91 @@ const Overtime: React.FC = () => {
             </div>
           </div>
 
+          <div className="lg:col-span-12">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-blue-50 text-[#003896] rounded-md"><ClockIconLarge /></div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">Daily Time Log Timeline</h3>
+                    <p className="text-[10px] font-medium text-slate-400">Visualizing entry and exit points for {selectedDate}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Change Date</label>
+                  <input 
+                    type="date" 
+                    value={selectedDate} 
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:border-[#003896]"
+                  />
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1200px]">
+                  <thead className="bg-slate-50/50">
+                    <tr>
+                      <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-100 sticky left-0 bg-slate-50 z-10 w-[200px]">Employee</th>
+                      {hoursArray.map(hour => (
+                        <th key={hour} className="px-2 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-100 text-center w-[40px]">{hour}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {attendanceRecords.length === 0 ? (
+                      <tr><td colSpan={25} className="p-10 text-center text-slate-400 text-sm">No attendance records found for this date.</td></tr>
+                    ) : attendanceRecords.map((record) => {
+                      const entryHour = getHourFromTime(record.entryTime);
+                      const exitHour = getHourFromTime(record.exitTime);
+                      
+                      const dayIndex = new Date(selectedDate).getDate() - 1;
+                      const empMuster = musterData.find(m => m.employee._id === record.employee._id);
+                      const otData = empMuster?.dailyOT[dayIndex];
+                      const otStartHour = otData ? getHourFromTime(otData.startTime) : null;
+                      const otEndHour = otData ? getHourFromTime(otData.endTime) : null;
+
+                      const isWorkedHour = (h: number, start: number | null, end: number | null) => {
+                        if (start === null || end === null) return false;
+                        if (start <= end) return h >= start && h <= end;
+                        return h >= start || h <= end; // Night shift
+                      };
+
+                      return (
+                        <tr key={record.employee._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-3 border-r border-slate-100 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-slate-900">{record.employee.name}</span>
+                              <span className="text-[9px] font-medium text-slate-400">{record.employee.registerId}</span>
+                            </div>
+                          </td>
+                          {Array.from({ length: 24 }).map((_, h) => {
+                            const isWorked = isWorkedHour(h, entryHour, exitHour);
+                            const isOT = isWorkedHour(h, otStartHour, otEndHour);
+                            
+                            return (
+                              <td key={h} className={`border-r border-slate-50 text-center p-0 h-12 min-w-[50px] transition-colors relative ${isWorked ? 'bg-blue-50/50' : ''} ${isOT ? 'bg-orange-50/50' : ''}`}>
+                                {isWorked && (
+                                  <div className="flex items-center justify-center text-[#003896] animate-in zoom-in duration-300">
+                                    <CheckSmallIcon />
+                                  </div>
+                                )}
+                                {isOT && (
+                                  <div className={`absolute inset-0 flex items-center justify-center text-orange-600 ${isWorked ? 'top-2' : ''}`}>
+                                    <CheckSmallIcon />
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <div className="lg:col-span-7">
             <div className="bg-white rounded-2xl border border-slate-200 p-8">
               <h3 className="text-xl font-bold text-slate-900 mb-8">OverTime Muster Roll Entry</h3>
@@ -269,6 +391,24 @@ const Overtime: React.FC = () => {
                     placeholder="e.g. 4"
                     className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
                     required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">OT Start Time</label>
+                  <input
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">OT End Time</label>
+                  <input
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#003896] transition-colors text-sm"
                   />
                 </div>
                 <div className="space-y-2">

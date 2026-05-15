@@ -53,7 +53,7 @@ router.get('/muster-roll', async (req, res) => {
           r.employee.toString() === emp._id.toString() && 
           new Date(r.date).toDateString() === date.toDateString()
         );
-        return record ? { hours: record.hours, status: record.status } : null;
+        return record ? { hours: record.hours, status: record.status, startTime: record.startTime, endTime: record.endTime } : null;
       });
 
       return {
@@ -89,10 +89,10 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { employeeId, date, hours, task, status } = req.body;
+    const { employeeId, date, hours, task, status, startTime, endTime } = req.body;
     const overtime = await Overtime.findOneAndUpdate(
       { employee: employeeId, date: new Date(date).setHours(0,0,0,0) },
-      { hours, task, status: status || 'Pending' },
+      { hours, task, status: status || 'Pending', startTime, endTime },
       { upsert: true, new: true }
     );
     res.status(201).json(overtime);

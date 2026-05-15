@@ -25,7 +25,7 @@ const EmployeeProfile: React.FC = () => {
     name: '',
     email: '',
     registerId: '',
-    department: 'CARDIOLOGY',
+    department: 'NURSING',
     designation: '',
     status: 'ON-DUTY',
     fatherName: '',
@@ -120,11 +120,11 @@ const EmployeeProfile: React.FC = () => {
       <Layout title="Employee Profile">
         <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
           <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Employee Not Found</h2>
           <p className="text-slate-500 mb-8">The employee profile you are looking for does not exist or has been removed.</p>
-          <button 
+          <button
             onClick={() => navigate('/employees')}
             className="bg-[#003896] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#002d7a] transition-all"
           >
@@ -136,14 +136,14 @@ const EmployeeProfile: React.FC = () => {
   }
 
   return (
-    <Layout 
-      title="Employee Profile" 
+    <Layout
+      title="Employee Profile"
       headerActions={
-        <button 
+        <button
           onClick={() => navigate('/employees')}
           className="flex items-center gap-2 text-slate-600 hover:text-[#003896] font-bold text-sm transition-colors"
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           Back to Directory
         </button>
       }
@@ -157,8 +157,8 @@ const EmployeeProfile: React.FC = () => {
               <div className="flex items-end gap-6">
                 <div className="w-32 h-32 rounded-3xl bg-white p-2 shadow-xl border border-slate-100">
                   <div className="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${employee.name}&backgroundColor=003896`} 
+                    <img
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${employee.name}&backgroundColor=003896`}
                       alt={employee.name}
                       className="w-full h-full object-cover"
                     />
@@ -170,17 +170,17 @@ const EmployeeProfile: React.FC = () => {
                 </div>
               </div>
               <div className="flex gap-3 pb-2">
-                <button 
+                <button
                   onClick={() => setIsModalOpen(true)}
                   className="px-6 py-2.5 bg-[#003896] text-white rounded-xl font-bold text-sm hover:bg-[#002d7a] transition-all shadow-lg shadow-[#003896]/20"
                 >
                   Edit Profile
                 </button>
-                <button 
+                <button
                   onClick={handleDelete}
                   className="p-2.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></svg>
                 </button>
               </div>
             </div>
@@ -216,11 +216,11 @@ const EmployeeProfile: React.FC = () => {
             <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-[#003896]">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900">Personal Information</h3>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-y-8 gap-x-12">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Full Legal Name</span>
@@ -244,11 +244,11 @@ const EmployeeProfile: React.FC = () => {
             <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-[#003896]">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-900">Employment Details</h3>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-y-8 gap-x-12">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Current Department</span>
@@ -302,15 +302,15 @@ const EmployeeProfile: React.FC = () => {
               <div className="space-y-3">
                 <button className="w-full py-3 px-4 bg-slate-50 text-slate-700 rounded-xl text-sm font-bold text-left hover:bg-slate-100 transition-colors flex items-center justify-between group">
                   Generate Salary Slip
-                  <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                  <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
                 <button className="w-full py-3 px-4 bg-slate-50 text-slate-700 rounded-xl text-sm font-bold text-left hover:bg-slate-100 transition-colors flex items-center justify-between group">
                   View Overtime Logs
-                  <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                  <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
                 <button className="w-full py-3 px-4 bg-slate-50 text-slate-700 rounded-xl text-sm font-bold text-left hover:bg-slate-100 transition-colors flex items-center justify-between group">
                   Holiday History
-                  <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                  <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
               </div>
             </div>
@@ -324,7 +324,7 @@ const EmployeeProfile: React.FC = () => {
               <div className="bg-[#003896] p-6 text-white flex justify-between items-center">
                 <h2 className="text-xl font-bold">Edit Employee Profile</h2>
                 <button onClick={() => setIsModalOpen(false)} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="p-8 grid grid-cols-2 gap-6">
@@ -343,11 +343,16 @@ const EmployeeProfile: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</label>
                   <select name="department" value={formData.department} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium">
-                    <option>CARDIOLOGY</option>
-                    <option>NEUROLOGY</option>
                     <option>NURSING</option>
+                    <option>MANAGER</option>
                     <option>ADMIN</option>
-                    <option>TECHNICAL</option>
+                    <option>OT ASSISTANT</option>
+                    <option>WARD ASSISTANT</option>
+                    <option>LAB TECHNICIAN</option>
+                    <option>PHARMACY ASSISTANT</option>
+                    <option>RECEPTIONIST</option>
+                    <option>WATCHMAN</option>
+                    <option>SWEEPER</option>
                   </select>
                 </div>
                 <div className="space-y-2">

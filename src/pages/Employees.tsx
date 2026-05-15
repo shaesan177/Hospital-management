@@ -12,7 +12,7 @@ const Employees: React.FC = () => {
     name: '',
     email: '',
     registerId: '',
-    department: 'CARDIOLOGY',
+    department: 'NURSING',
     designation: '',
     status: 'ON-DUTY',
     fatherName: '',
@@ -47,7 +47,7 @@ const Employees: React.FC = () => {
       name: '',
       email: '',
       registerId: '',
-      department: 'CARDIOLOGY',
+      department: 'NURSING',
       designation: '',
       status: 'ON-DUTY',
       fatherName: '',
@@ -90,10 +90,10 @@ const Employees: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url = isEditing 
+      const url = isEditing
         ? `http://localhost:5000/api/employees/${editingId}`
         : 'http://localhost:5000/api/employees';
-      
+
       const method = isEditing ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -109,7 +109,7 @@ const Employees: React.FC = () => {
           name: '',
           email: '',
           registerId: '',
-          department: 'CARDIOLOGY',
+          department: 'NURSING',
           designation: '',
           status: 'ON-DUTY',
           fatherName: '',
@@ -140,7 +140,7 @@ const Employees: React.FC = () => {
               <span className="text-[10px] font-bold text-white/50 block tracking-widest uppercase mb-1">TOTAL ON-DUTY</span>
               <span className="text-2xl font-bold">{employees.filter(e => e.status === 'ON-DUTY').length}</span>
             </div>
-            <button 
+            <button
               onClick={openAddModal}
               className="bg-white text-[#003896] px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
             >
@@ -179,7 +179,7 @@ const Employees: React.FC = () => {
                     <span className="text-sm font-bold text-slate-600">{emp.registerId}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-blue-50 text-[#003896] rounded-md text-[10px] font-bold">{emp.department}</span>
+                    <span className="px-3 py-1 bg-blue-50 text-[#003896] rounded-md text-[10px] font-bold whitespace-nowrap">{emp.department}</span>
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-slate-600">
                     {emp.designation}
@@ -193,13 +193,13 @@ const Employees: React.FC = () => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Link to={`/employee-profile/${emp._id}`} title="View Profile" className="p-2 text-slate-400 hover:text-[#003896] transition-colors">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                       </Link>
                       <button onClick={() => openEditModal(emp)} title="Edit Employee" className="p-2 text-slate-400 hover:text-amber-500 transition-colors">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                       </button>
                       <button onClick={() => handleDelete(emp._id)} title="Delete Employee" className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></svg>
                       </button>
                     </div>
                   </td>
@@ -216,7 +216,7 @@ const Employees: React.FC = () => {
               <div className="bg-[#003896] p-6 text-white flex justify-between items-center">
                 <h2 className="text-xl font-bold">{isEditing ? 'Edit Employee Profile' : 'Register New Employee'}</h2>
                 <button onClick={() => setIsModalOpen(false)} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="p-8 grid grid-cols-2 gap-6">
@@ -235,11 +235,16 @@ const Employees: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</label>
                   <select name="department" value={formData.department} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium">
-                    <option>CARDIOLOGY</option>
-                    <option>NEUROLOGY</option>
                     <option>NURSING</option>
+                    <option>MANAGER</option>
                     <option>ADMIN</option>
-                    <option>TECHNICAL</option>
+                    <option>OT ASSISTANT</option>
+                    <option>WARD ASSISTANT</option>
+                    <option>LAB TECHNICIAN</option>
+                    <option>PHARMACY ASSISTANT</option>
+                    <option>RECEPTIONIST</option>
+                    <option>WATCHMAN</option>
+                    <option>SWEEPER</option>
                   </select>
                 </div>
                 <div className="space-y-2">
