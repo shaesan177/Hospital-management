@@ -33,7 +33,7 @@ const Reports: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               <span>ADMIN CONSOLE</span>
-              <span className="text-slate-300">›</span>
+              <span className="text-slate-300">&gt;</span>
               <span className="text-[#003896]">REPORTS & ANALYTICS</span>
             </div>
             <h1 className="text-3xl font-black text-slate-900 mb-1">Organizational Analytics</h1>

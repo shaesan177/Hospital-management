@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import loginBg from '../assets/login-bg.png';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setError('');
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+    }
   };
 
   return (
@@ -66,6 +76,12 @@ const Login: React.FC = () => {
             <h2 className="text-3xl font-bold text-slate-900 mb-2">Welcome back</h2>
             <p className="text-slate-500">Please enter your clinical credentials to continue.</p>
           </div>
+          
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm font-semibold">
+              {error}
+            </div>
+          )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
@@ -121,7 +137,7 @@ const Login: React.FC = () => {
             </div>
 
             <button type="submit" className="w-full bg-[#003896] hover:bg-[#002d7a] text-white py-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors mt-4">
-              Secure Login <span>→</span>
+              Secure Login <span>-&gt;</span>
             </button>
           </form>
 

@@ -2,12 +2,18 @@ import mongoose from 'mongoose';
 
 const attendanceSchema = new mongoose.Schema({
   employee: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
-  date: { type: Date, default: Date.now },
-  entryTime: { type: String }, // Format: "08:00 AM"
-  exitTime: { type: String },  // Format: "04:30 PM"
+  date: { type: Date, required: true },
+  checkIn: { type: String },
+  breakStart: { type: String },
+  breakEnd: { type: String },
+  checkOut: { type: String },
+  totalHours: { type: Number, default: 0 },
+  breakDuration: { type: Number, default: 0 },
+  netHours: { type: Number, default: 0 },
+  otHours: { type: Number, default: 0 },
   natureOfWork: { type: String },
-  rest: { type: String },      // e.g., "60 min"
-  status: { type: String, enum: ['PRESENT', 'ABSENT', 'LATE'], default: 'PRESENT' }
+  status: { type: String, enum: ['PRESENT', 'ABSENT'], default: 'PRESENT' },
+  completionStatus: { type: String, enum: ['Completed', 'Incomplete', 'Pending'], default: 'Pending' }
 }, { timestamps: true });
 
 export default mongoose.model('Attendance', attendanceSchema);

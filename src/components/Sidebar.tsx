@@ -3,8 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : { name: 'Admin', role: 'admin' };
 
-  const navItems = [
+  let navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
     { path: '/admin', label: 'Admin', icon: <AdminIcon /> },
     { path: '/employees', label: 'Employees', icon: <EmployeesIcon /> },
@@ -14,6 +16,12 @@ const Sidebar: React.FC = () => {
     { path: '/payroll', label: 'Payroll', icon: <PayrollIcon /> },
     { path: '/reports', label: 'Reports', icon: <ReportsIcon /> },
   ];
+
+  if (user.role === 'manager') {
+    navItems = navItems.filter(item => 
+      ['/dashboard', '/attendance', '/employees', '/overtime', '/holidays', '/payroll'].includes(item.path)
+    );
+  }
 
   return (
     <aside className="w-[260px] bg-white border-r border-slate-200 flex flex-col fixed h-screen z-20">
@@ -48,17 +56,23 @@ const Sidebar: React.FC = () => {
 
       <div className="mt-auto">
         <div className="p-4 mx-3 mb-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
-            <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" 
-              alt="Dr. Sarah Chen" 
-              className="w-full h-full object-cover"
-            />
+          <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">
+            {user.name.charAt(0).toUpperCase()}
           </div>
-          <div className="flex flex-col">
-            <h4 className="text-[13px] font-black text-slate-900 leading-tight">Dr. Sarah Chen</h4>
-            <p className="text-[10px] font-bold text-slate-400 tracking-tight">Chief Admin</p>
+          <div className="flex flex-col flex-1">
+            <h4 className="text-[13px] font-black text-slate-900 leading-tight truncate">{user.name}</h4>
+            <p className="text-[10px] font-bold text-slate-400 tracking-tight capitalize">{user.role}</p>
           </div>
+          <button 
+            onClick={() => {
+              localStorage.removeItem('token');
+              window.location.href = '/login';
+            }}
+            className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
+            title="Logout"
+          >
+            <LogoutIcon />
+          </button>
         </div>
 
         <div className="p-4 mx-3 mb-6 bg-[#001d52] rounded-xl flex items-center justify-between">
@@ -82,5 +96,6 @@ const OvertimeIcon = () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="no
 const HolidaysIcon = () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>;
 const PayrollIcon = () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>;
 const ReportsIcon = () => <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>;
+const LogoutIcon = () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>;
 
 export default Sidebar;

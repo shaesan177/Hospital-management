@@ -93,8 +93,11 @@ const Holidays: React.FC = () => {
   });
 
   const CustomEvent = ({ event }: any) => (
-    <div className="flex items-center justify-center h-full w-full">
-      <div className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-sm shadow-red-500/40 animate-pulse" />
+    <div className="flex items-center gap-2 px-2 py-1 bg-red-50 border border-red-100 rounded-md w-full h-full group transition-all hover:bg-red-100">
+      <div className="w-1.5 h-1.5 bg-red-500 rounded-full shadow-sm shadow-red-500/40 shrink-0" />
+      <span className="text-[9px] font-black text-red-700 truncate uppercase tracking-tighter">
+        {event.title}
+      </span>
     </div>
   );
 

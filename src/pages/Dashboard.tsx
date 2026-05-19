@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
 
         <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard title="TOTAL EMPLOYEES" value={stats?.totalEmployees || 0} trend="+2.4% ↑" trendType="up" update="Updated just now" icon={<EmployeesIcon />} />
+            <StatCard title="TOTAL EMPLOYEES" value={stats?.totalEmployees || 0} trend="+2.4%" trendType="up" update="Updated just now" icon={<EmployeesIcon />} />
             <StatCard title="PRESENT TODAY" value={stats?.presentToday || 0} trend={`${Math.round((stats?.presentToday / (stats?.totalEmployees || 1)) * 100)}% Rate`} trendType="neutral" update="Daily Attendance" icon={<CheckIcon />} iconBg="bg-emerald-50 text-emerald-500" valueColor="text-emerald-500" />
             <StatCard title="ON LEAVE" value={stats?.onLeave || 0} trend="Active Requests" trendType="down" update="Current Status" icon={<ClockIcon />} iconBg="bg-orange-50 text-orange-500" valueColor="text-orange-500" />
           </div>

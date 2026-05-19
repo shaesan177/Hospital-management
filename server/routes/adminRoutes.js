@@ -38,26 +38,39 @@ router.get('/roles', async (req, res) => {
   }
 });
 
-router.post('/roles', async (req, res) => {
+// Give Access to Employee
+router.post('/give-access', async (req, res) => {
   try {
-    const role = new Role(req.body);
-    const newRole = await role.save();
-    res.status(201).json(newRole);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
+    const { email, name, password, role } = req.body;
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already has access' });
+    }
 
-router.delete('/roles/:id', async (req, res) => {
-  try {
-    await Role.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Role deleted' });
+    const newUser = new User({
+      email,
+      name,
+      password,
+      role
+    });
+
+    await newUser.save();
+    
+    // Log this action
+    await AuditLog.create({
+      type: 'PERMISSION',
+      status: 'SUCCESS',
+      title: 'Access Granted',
+      meta: `Granted ${role} access to ${name} (${email})`
+    });
+
+    res.status(201).json({ message: 'Access granted successfully', user: newUser });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
-
-// Security Audit Logs
 router.get('/audit-logs', async (req, res) => {
   try {
     const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(10);

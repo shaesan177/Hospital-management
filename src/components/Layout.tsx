@@ -45,12 +45,12 @@ const Layout: React.FC<LayoutProps> = ({ children, title, searchPlaceholder = "S
           <button className="text-sm font-bold text-[#003896] hover:underline mr-2">Help</button>
           
           <div className="flex items-center gap-3 pl-4">
-            <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-blue-100 border border-slate-200 flex items-center justify-center text-blue-700 font-bold text-lg">
+              {(() => {
+                const userString = localStorage.getItem('user');
+                const user = userString ? JSON.parse(userString) : { name: 'Admin' };
+                return user.name.charAt(0).toUpperCase();
+              })()}
             </div>
           </div>
         </div>
@@ -58,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, searchPlaceholder = "S
 
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 ml-[260px] p-8 pt-6">
+        <main className="flex-1 ml-[260px] p-8 pt-6 min-w-0">
           {children}
         </main>
       </div>

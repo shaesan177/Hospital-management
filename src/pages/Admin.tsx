@@ -1,27 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import axios from 'axios';
 
 const Admin: React.FC = () => {
   const [stats, setStats] = useState({ totalUsers: 0, activeRoles: 0, permissionChanges: 0 });
-  const [roles, setRoles] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [accessForm, setAccessForm] = useState({
+    employeeId: '',
+    role: 'staff',
+    password: ''
+  });
+  const [accessMessage, setAccessMessage] = useState('');
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [statsRes, rolesRes, logsRes] = await Promise.all([
+      const [statsRes, employeesRes, logsRes] = await Promise.all([
         fetch('http://localhost:5000/api/admin/stats'),
-        fetch('http://localhost:5000/api/admin/roles'),
+        fetch('http://localhost:5000/api/employees'),
         fetch('http://localhost:5000/api/admin/audit-logs')
       ]);
 
       const statsData = await statsRes.json();
-      const rolesData = await rolesRes.json();
+      const employeesData = await employeesRes.json();
       const logsData = await logsRes.json();
 
       setStats(statsData);
-      setRoles(rolesData);
+      setEmployees(employeesData);
       setAuditLogs(logsData);
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -34,6 +42,27 @@ const Admin: React.FC = () => {
     fetchData();
   }, []);
 
+  const handleGrantAccess = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAccessMessage('');
+    const employee = employees.find(emp => emp._id === accessForm.employeeId);
+    if (!employee) return;
+
+    try {
+      await axios.post('http://localhost:5000/api/admin/give-access', {
+        email: employee.email,
+        name: employee.name,
+        password: accessForm.password,
+        role: accessForm.role
+      });
+      setAccessMessage('Access granted successfully!');
+      setAccessForm({ employeeId: '', role: 'staff', password: '' });
+      fetchData(); // refresh audit logs
+    } catch (error: any) {
+      setAccessMessage(error.response?.data?.message || 'Error granting access');
+    }
+  };
+
   return (
     <Layout title="Admin Control Panel" searchPlaceholder="Search audit logs...">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
@@ -44,52 +73,80 @@ const Admin: React.FC = () => {
 
         <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard title="TOTAL ACTIVE USERS" value={stats.totalUsers} trend="+2.4% ↑" trendType="up" icon={<UsersIcon />} />
+            <StatCard title="TOTAL ACTIVE USERS" value={stats.totalUsers} trend="+2.4%" trendType="up" icon={<UsersIcon />} />
             <StatCard title="ACTIVE ROLES" value={stats.activeRoles} trend="Static" trendType="neutral" icon={<ShieldIcon />} />
             <StatCard title="PERMISSION CHANGES" value={stats.permissionChanges} trend="Alerts active" trendType="down" icon={<KeyIcon />} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-[#003896]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                <h3 className="text-sm font-bold text-slate-700">Role Management</h3>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#003896]/10 flex items-center justify-center text-[#003896]">
+                  <KeyIcon />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Access Management</h3>
+                  <p className="text-xs font-bold text-slate-500">Grant system access to existing employees</p>
+                </div>
               </div>
-              <button className="px-4 py-2 bg-[#003896] text-white rounded-lg text-xs font-bold hover:bg-[#002d7a]">
-                + Create New Role
-              </button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b border-slate-100">
-                  <tr>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role Name</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Description</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Users</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {loading ? (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">Loading roles...</td></tr>
-                  ) : roles.map((role: any) => (
-                    <RoleRow 
-                      key={role._id}
-                      name={role.name.charAt(0).toUpperCase() + role.name.slice(1)} 
-                      color={role.color} 
-                      users={role.users} 
-                      description={role.description} 
+            
+            <div className="p-8">
+              {accessMessage && (
+                <div className={`p-4 mb-6 rounded-lg text-sm font-bold ${accessMessage.includes('successfully') ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                  {accessMessage}
+                </div>
+              )}
+              <form onSubmit={handleGrantAccess} className="space-y-6 max-w-2xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Employee</label>
+                    <select 
+                      value={accessForm.employeeId}
+                      onChange={(e) => setAccessForm({...accessForm, employeeId: e.target.value})}
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
+                      required
+                    >
+                      <option value="">Choose an employee...</option>
+                      {employees.map(emp => (
+                        <option key={emp._id} value={emp._id}>{emp.name} ({emp.registerId})</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assign Role</label>
+                    <select 
+                      value={accessForm.role}
+                      onChange={(e) => setAccessForm({...accessForm, role: e.target.value})}
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
+                    >
+                      <option value="staff">Staff (Basic Access)</option>
+                      <option value="manager">Manager (Elevated Access)</option>
+                      <option value="admin">Administrator (Full Access)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Temporary Password</label>
+                    <input 
+                      type="text"
+                      value={accessForm.password}
+                      onChange={(e) => setAccessForm({...accessForm, password: e.target.value})}
+                      placeholder="Enter a secure temporary password"
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
+                      required
+                      minLength={5}
                     />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="p-6 bg-slate-50 flex justify-between items-center text-xs font-bold">
-              <span className="text-slate-400">Showing {roles.length} system roles</span>
-              <div className="flex gap-2">
-                <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">Previous</button>
-                <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">Next</button>
-              </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <button type="submit" className="px-8 py-4 bg-[#003896] hover:bg-[#002d7a] text-white rounded-xl text-sm font-black shadow-lg shadow-[#003896]/20 transition-all uppercase tracking-wider flex items-center gap-2">
+                    <KeyIcon /> Grant System Access
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -120,7 +177,7 @@ const Admin: React.FC = () => {
               ))}
             </div>
             <button className="w-full mt-8 pt-6 border-t border-slate-100 text-[10px] font-bold text-[#003896] flex items-center justify-center gap-2 hover:opacity-80 transition-opacity">
-              View Detailed Security Report <span>→</span>
+              View Detailed Security Report <span>-&gt;</span>
             </button>
           </div>
           
@@ -146,31 +203,6 @@ const StatCard = ({ title, value, trend, trendType, icon }: any) => (
       <h3 className="text-3xl font-bold text-slate-900">{value}</h3>
     </div>
   </div>
-);
-
-const RoleRow = ({ name, color, users, description }: any) => (
-  <tr className="hover:bg-slate-50 transition-colors">
-    <td className="px-6 py-5">
-      <div className="flex items-center gap-3">
-        <span className={`w-2 h-2 rounded-full ${color}`}></span>
-        <span className="text-sm font-bold text-slate-900">{name}</span>
-      </div>
-    </td>
-    <td className="px-6 py-5">
-      <p className="text-xs text-slate-500 max-w-[300px] leading-relaxed">{description}</p>
-    </td>
-    <td className="px-6 py-5">
-      <span className="text-sm font-bold text-slate-700">{users}</span>
-    </td>
-    <td className="px-6 py-5 text-right">
-      <div className="flex justify-end gap-4">
-        <button className="text-xs font-bold text-[#003896] hover:underline">Edit</button>
-        <button className="text-slate-300 hover:text-red-500 transition-colors">
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-        </button>
-      </div>
-    </td>
-  </tr>
 );
 
 const AuditItem = ({ icon, bg, title, meta, time }: any) => (
