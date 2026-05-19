@@ -89,18 +89,20 @@ const Overtime: React.FC = () => {
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Viewing entry and exit points for {selectedDate}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 mr-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
+              <div className="flex flex-wrap items-center gap-2 sm:mr-4">
                 <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-400"></div> Normal Shift</span>
-                <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase ml-2"><div className="w-2.5 h-2.5 rounded-sm bg-orange-400"></div> Overtime</span>
+                <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase sm:ml-2"><div className="w-2.5 h-2.5 rounded-sm bg-orange-400"></div> Overtime</span>
               </div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Date</label>
-              <input 
-                type="date" 
-                value={selectedDate} 
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-[#003896] shadow-sm"
-              />
+              <div className="w-full sm:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Select Date</label>
+                <input 
+                  type="date" 
+                  value={selectedDate} 
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full sm:w-auto px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-[#003896] shadow-sm"
+                />
+              </div>
             </div>
           </div>
           <div className="overflow-x-auto w-full">

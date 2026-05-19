@@ -20,19 +20,19 @@ const Payroll: React.FC = () => {
     <Layout title="Register of Wages" searchPlaceholder="Search employee...">
       <div className="max-w-[1400px] mx-auto">
         {/* Header Section */}
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               <span>FINANCIAL MANAGEMENT</span>
             </div>
             <h1 className="text-3xl font-black text-slate-900">October 2024 Payroll Cycle</h1>
           </div>
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <button className="flex justify-center items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm w-full sm:w-auto">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               Export Register
             </button>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-[#003896] rounded-xl text-sm font-bold text-white hover:bg-[#002d7a] transition-all shadow-lg shadow-blue-900/20">
+            <button className="flex justify-center items-center gap-2 px-5 py-2.5 bg-[#003896] rounded-xl text-sm font-bold text-white hover:bg-[#002d7a] transition-all shadow-lg shadow-blue-900/20 w-full sm:w-auto">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
               Process Payments
             </button>
@@ -40,7 +40,7 @@ const Payroll: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           {stats.map((stat, idx) => (
             <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group hover:border-[#003896] transition-all">
               <div className="flex justify-between items-start mb-4">
@@ -55,14 +55,14 @@ const Payroll: React.FC = () => {
 
         {/* Table Section */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-black text-slate-900">Wage Register Detail</h3>
               <p className="text-xs font-medium text-slate-400">Complete breakdown of earnings and deductions for the current period</p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <select className="appearance-none bg-slate-50 border border-slate-100 px-4 py-2 pr-10 rounded-xl text-xs font-black text-slate-600 outline-none focus:border-[#003896] transition-all cursor-pointer">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+              <div className="relative w-full sm:w-auto">
+                <select className="w-full appearance-none bg-slate-50 border border-slate-100 px-4 py-2 pr-10 rounded-xl text-xs font-black text-slate-600 outline-none focus:border-[#003896] transition-all cursor-pointer">
                   <option>All Departments</option>
                   <option>Nursing</option>
                   <option>Administration</option>
@@ -72,7 +72,7 @@ const Payroll: React.FC = () => {
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
               </div>
-              <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-[#003896] hover:bg-slate-50 transition-all">
+              <button className="flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-[#003896] hover:bg-slate-50 transition-all">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                 Advanced Filters
               </button>
@@ -83,14 +83,14 @@ const Payroll: React.FC = () => {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50">
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Employee & Role</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Basic Pay</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">OT Pay</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Allowances</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Gross Pay</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Deductions</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Net Payable</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[200px]">Employee & Role</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Basic Pay</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">OT Pay</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Allowances</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Gross Pay</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Deductions</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[120px]">Net Payable</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center min-w-[100px]">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -98,7 +98,7 @@ const Payroll: React.FC = () => {
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl ${emp.color} flex items-center justify-center text-xs font-black`}>
+                        <div className={`w-10 h-10 rounded-xl shrink-0 ${emp.color} flex items-center justify-center text-xs font-black`}>
                           {emp.initial}
                         </div>
                         <div>
@@ -140,9 +140,9 @@ const Payroll: React.FC = () => {
             </table>
           </div>
 
-          <div className="p-6 border-t border-slate-100 flex items-center justify-between">
-            <p className="text-xs font-bold text-slate-400">Displaying 25 of 1,248 Employee Records</p>
-            <div className="flex items-center gap-6">
+          <div className="p-4 md:p-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">Displaying 25 of 1,248 Employee Records</p>
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-400">Rows per page:</span>
                 <select className="bg-transparent text-xs font-black text-slate-600 outline-none">
@@ -156,8 +156,8 @@ const Payroll: React.FC = () => {
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <button className="w-8 h-8 rounded-lg bg-[#003896] text-white text-xs font-black shadow-sm shadow-blue-900/20">1</button>
-                <button className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600 text-xs font-black">2</button>
-                <button className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600 text-xs font-black">3</button>
+                <button className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600 text-xs font-black hidden sm:block">2</button>
+                <button className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-600 text-xs font-black hidden sm:block">3</button>
                 <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
@@ -167,43 +167,43 @@ const Payroll: React.FC = () => {
         </div>
 
         {/* Audit Checks Section */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 md:p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-6 h-6 bg-amber-100 rounded-md flex items-center justify-center">
+            <div className="w-6 h-6 bg-amber-100 rounded-md flex items-center justify-center shrink-0">
               <svg className="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </div>
             <h3 className="text-sm font-black text-slate-400 tracking-widest uppercase">COMPLIANCE & AUDIT CHECKS</h3>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shrink-0">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
                 <h4 className="text-sm font-bold text-emerald-900">Minimum Wage Compliance Verification Passed</h4>
               </div>
-              <span className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-emerald-600 border border-emerald-100 uppercase tracking-wider">AUTOMATIC</span>
+              <span className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-emerald-600 border border-emerald-100 uppercase tracking-wider shrink-0 w-full sm:w-auto text-center">AUTOMATIC</span>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-blue-50/50 rounded-2xl border border-blue-100 gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white shrink-0">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                 </div>
                 <h4 className="text-sm font-bold text-blue-900">Tax Bracket Updates Applied for Q4 2024</h4>
               </div>
-              <button className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-blue-600 border border-blue-100 uppercase tracking-wider">VIEW LOGS</button>
+              <button className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-blue-600 border border-blue-100 uppercase tracking-wider shrink-0 w-full sm:w-auto">VIEW LOGS</button>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-amber-50/50 rounded-2xl border border-amber-100 gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center text-white shrink-0">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 </div>
                 <h4 className="text-sm font-bold text-amber-900">14 Overtime records exceed standard threshold (Pending Approval)</h4>
               </div>
-              <button className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-amber-600 border border-amber-100 uppercase tracking-wider">REVIEW</button>
+              <button className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-amber-600 border border-amber-100 uppercase tracking-wider shrink-0 w-full sm:w-auto">REVIEW</button>
             </div>
           </div>
         </div>

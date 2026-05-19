@@ -170,7 +170,7 @@ const Holidays: React.FC = () => {
     <Layout title="HMS Portal" searchPlaceholder="Search holidays...">
       <div className="max-w-[1400px] mx-auto animate-in fade-in duration-500">
         {/* Header Section */}
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               <span>ADMIN</span>
@@ -180,10 +180,10 @@ const Holidays: React.FC = () => {
             <h1 className="text-2xl font-black text-slate-900 mb-1">Leave Management Calendar</h1>
             <p className="text-sm font-medium text-slate-500">Manage statutory government holidays and hospital-wide leave schedules.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-[#003896] rounded-xl text-sm font-bold text-white hover:bg-[#002d7a] transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+              className="w-full md:w-auto flex justify-center items-center gap-2 px-6 py-3 bg-[#003896] rounded-xl text-sm font-bold text-white hover:bg-[#002d7a] transition-all shadow-lg shadow-blue-900/20 active:scale-95"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
               ADD UPCOMING LEAVE
@@ -191,11 +191,11 @@ const Holidays: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Calendar Content */}
-          <div className="col-span-8 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex items-center gap-4">
+          <div className="col-span-1 lg:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50">
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
                 <h3 className="text-lg font-black text-slate-900">
                   {view === 'year' ? moment(date).format('YYYY') : moment(date).format('MMMM YYYY')}
                 </h3>
@@ -220,29 +220,29 @@ const Holidays: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto justify-center">
                 <button 
                   onClick={() => setView(Views.MONTH)}
-                  className={`px-5 py-2 rounded-lg text-xs font-black transition-all ${view === Views.MONTH ? 'bg-white text-[#003896] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`px-3 md:px-5 py-2 rounded-lg text-xs font-black transition-all flex-1 sm:flex-none ${view === Views.MONTH ? 'bg-white text-[#003896] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   Month
                 </button>
                 <button 
                   onClick={() => setView(Views.WEEK)}
-                  className={`px-5 py-2 rounded-lg text-xs font-black transition-all ${view === Views.WEEK ? 'bg-white text-[#003896] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`px-3 md:px-5 py-2 rounded-lg text-xs font-black transition-all flex-1 sm:flex-none ${view === Views.WEEK ? 'bg-white text-[#003896] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   Week
                 </button>
                 <button 
                   onClick={() => setView('year')}
-                  className={`px-5 py-2 rounded-lg text-xs font-black transition-all ${view === 'year' ? 'bg-white text-[#003896] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`px-3 md:px-5 py-2 rounded-lg text-xs font-black transition-all flex-1 sm:flex-none ${view === 'year' ? 'bg-white text-[#003896] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   Year
                 </button>
               </div>
             </div>
 
-            <div className="h-[600px] overflow-hidden">
+            <div className="h-[500px] md:h-[600px] overflow-hidden">
               {view === 'year' ? (
                 <YearView 
                   date={date} 
@@ -250,7 +250,8 @@ const Holidays: React.FC = () => {
                   onSelectEvent={(event: any) => setSelectedEvent(event.resource)} 
                 />
               ) : (
-                <div className="h-full p-6">
+                <div className="h-full p-2 md:p-6 overflow-x-auto">
+                  <div className="min-w-[600px] h-full">
                   <Calendar
                     localizer={localizer}
                     events={events}
@@ -268,13 +269,14 @@ const Holidays: React.FC = () => {
                     toolbar={false}
                     className="custom-calendar"
                   />
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Right Sidebar - Upcoming Leaves */}
-          <div className="col-span-4 space-y-6">
+          <div className="col-span-1 lg:col-span-4 space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[700px]">
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <h3 className="text-lg font-black text-slate-900">Upcoming Government Holidays</h3>

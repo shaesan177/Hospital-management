@@ -50,17 +50,17 @@ const Dashboard: React.FC = () => {
   return (
     <Layout title="Overview Dashboard" searchPlaceholder="Search employees, records, or reports...">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
-        <div className="col-span-full flex justify-between items-start mb-4">
+        <div className="col-span-full flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-4">
           <div>
             <h1 className="text-3xl font-bold mb-2">Hospital Overview</h1>
             <p className="text-slate-500 text-sm font-medium">Real-time performance and resource metrics for HMS Medical Center.</p>
           </div>
-          <div className="flex gap-4">
-            <button className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-50">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <button className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-bold flex justify-center items-center gap-2 hover:bg-slate-50 w-full sm:w-auto">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               Export Data
             </button>
-            <button className="px-4 py-2.5 bg-[#003896] text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#002d7a]">
+            <button className="px-4 py-2.5 bg-[#003896] text-white rounded-lg text-sm font-bold flex justify-center items-center gap-2 hover:bg-[#002d7a] w-full sm:w-auto">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               New Entry
             </button>
@@ -74,35 +74,37 @@ const Dashboard: React.FC = () => {
             <StatCard title="ON LEAVE" value={stats?.onLeave || 0} trend="Active Requests" trendType="down" update="Current Status" icon={<ClockIcon />} iconBg="bg-orange-50 text-orange-500" valueColor="text-orange-500" />
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200">
-            <div className="flex justify-between items-center mb-8">
+          <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
               <div>
                 <h3 className="text-lg font-bold">Attendance Trend</h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daily attendance rates across all departments</p>
               </div>
-              <div className="flex bg-slate-100 p-1 rounded-lg">
-                <button className="px-3 py-1.5 text-[10px] font-bold text-slate-500">WEEKLY</button>
-                <button className="px-3 py-1.5 text-[10px] font-bold bg-white text-slate-900 rounded-md shadow-sm">MONTHLY</button>
+              <div className="flex bg-slate-100 p-1 rounded-lg w-full sm:w-auto">
+                <button className="flex-1 sm:flex-none px-3 py-1.5 text-[10px] font-bold text-slate-500">WEEKLY</button>
+                <button className="flex-1 sm:flex-none px-3 py-1.5 text-[10px] font-bold bg-white text-slate-900 rounded-md shadow-sm">MONTHLY</button>
               </div>
             </div>
-            <div className="flex items-end justify-between h-[200px] pt-4">
-              {last7Days.map((d, i) => (
-                <div key={i} className="flex flex-col items-center gap-4 flex-1">
-                  <div className="w-10 bg-slate-100 rounded-md relative h-[150px] flex items-end">
-                    <div 
-                      className={`w-full rounded-md transition-all duration-500 ${i === 6 ? 'bg-[#003896]' : 'bg-slate-200'}`} 
-                      style={{ height: `${(d.count / maxAttendance) * 100}%` }}
-                    >
-                      {i === 6 && d.count > 0 && (
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#003896] text-white px-3 py-1 rounded text-[10px] font-bold whitespace-nowrap">
-                          {d.count} today
-                        </div>
-                      )}
+            <div className="overflow-x-auto pb-4">
+              <div className="flex items-end justify-between h-[200px] pt-4 min-w-[500px]">
+                {last7Days.map((d, i) => (
+                  <div key={i} className="flex flex-col items-center gap-4 flex-1">
+                    <div className="w-8 md:w-10 bg-slate-100 rounded-md relative h-[150px] flex items-end">
+                      <div 
+                        className={`w-full rounded-md transition-all duration-500 ${i === 6 ? 'bg-[#003896]' : 'bg-slate-200'}`} 
+                        style={{ height: `${(d.count / maxAttendance) * 100}%` }}
+                      >
+                        {i === 6 && d.count > 0 && (
+                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#003896] text-white px-3 py-1 rounded text-[10px] font-bold whitespace-nowrap z-10">
+                            {d.count} today
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <span className="text-[10px] font-bold text-slate-400">{d.day}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">{d.day}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 

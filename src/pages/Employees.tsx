@@ -125,24 +125,24 @@ const Employees: React.FC = () => {
     <Layout title="Employee Management" searchPlaceholder="Search employee by names.. , id or department">
       <div className="space-y-6">
         {/* Top Banner */}
-        <div className="bg-[#003896] rounded-2xl p-8 text-white flex justify-between items-center shadow-lg shadow-[#003896]/10">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
-              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+        <div className="bg-[#003896] rounded-2xl p-6 md:p-8 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-lg shadow-[#003896]/10">
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+              <svg className="w-6 h-6 md:w-8 md:h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
             </div>
             <div>
-              <h1 className="text-3xl font-bold mb-1">Employee Directory</h1>
-              <p className="text-white/70 text-sm font-medium">Managing {employees.length} Active Medical & Administrative Staff</p>
+              <h1 className="text-2xl md:text-3xl font-bold mb-1">Employee Directory</h1>
+              <p className="text-white/70 text-xs md:text-sm font-medium">Managing {employees.length} Active Medical & Administrative Staff</p>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="text-center px-6 border-r border-white/20">
-              <span className="text-[10px] font-bold text-white/50 block tracking-widest uppercase mb-1">TOTAL ON-DUTY</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full md:w-auto">
+            <div className="text-left sm:text-center px-0 sm:px-6 border-none sm:border-r border-white/20 w-full sm:w-auto flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-center">
+              <span className="text-[10px] font-bold text-white/50 block tracking-widest uppercase mb-0 sm:mb-1">TOTAL ON-DUTY</span>
               <span className="text-2xl font-bold">{employees.filter(e => e.status === 'ON-DUTY').length}</span>
             </div>
             <button
               onClick={openAddModal}
-              className="bg-white text-[#003896] px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors"
+              className="w-full sm:w-auto bg-white text-[#003896] px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors flex justify-center items-center"
             >
               + Add New Employee
             </button>
@@ -150,8 +150,8 @@ const Employees: React.FC = () => {
         </div>
 
         {/* Filter Bar and Table */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <table className="w-full text-left">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+          <table className="w-full text-left min-w-[800px]">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Employee Name</th>
@@ -219,7 +219,7 @@ const Employees: React.FC = () => {
                   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="p-8 grid grid-cols-2 gap-6">
+              <form onSubmit={handleSubmit} className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-h-[80vh] overflow-y-auto">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
                   <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. Dr. Jane Doe" />
@@ -271,7 +271,7 @@ const Employees: React.FC = () => {
                     <option>ON-LEAVE</option>
                   </select>
                 </div>
-                <div className="col-span-2 flex gap-4 pt-4">
+                <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row gap-4 pt-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
                   <button type="submit" className="flex-1 px-6 py-3 bg-[#003896] text-white rounded-xl font-bold hover:bg-[#002d7a] transition-colors shadow-lg shadow-[#003896]/20">
                     {isEditing ? 'Save Changes' : 'Register Staff'}
