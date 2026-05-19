@@ -19,9 +19,9 @@ const Admin: React.FC = () => {
     try {
       setLoading(true);
       const [statsRes, employeesRes, logsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/stats'),
-        fetch('http://localhost:5000/api/employees'),
-        fetch('http://localhost:5000/api/admin/audit-logs')
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/stats`),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/employees`),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/audit-logs`)
       ]);
 
       const statsData = await statsRes.json();
@@ -49,7 +49,7 @@ const Admin: React.FC = () => {
     if (!employee) return;
 
     try {
-      await axios.post('http://localhost:5000/api/admin/give-access', {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/give-access`, {
         email: employee.email,
         name: employee.name,
         password: accessForm.password,

@@ -34,7 +34,7 @@ const EmployeeProfile: React.FC = () => {
 
   const fetchEmployee = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/employees/${id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`}/api/employees/${id}`);
       if (response.ok) {
         const data = await response.json();
         setEmployee(data);
@@ -72,7 +72,7 @@ const EmployeeProfile: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`}/api/employees/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -90,7 +90,7 @@ const EmployeeProfile: React.FC = () => {
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`}/api/employees/${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {

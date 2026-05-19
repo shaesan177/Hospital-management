@@ -21,7 +21,7 @@ const Employees: React.FC = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/employees');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/employees`);
       const data = await response.json();
       setEmployees(data);
       setLoading(false);
@@ -75,7 +75,7 @@ const Employees: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/employees/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`}/api/employees/${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {
@@ -91,8 +91,8 @@ const Employees: React.FC = () => {
     e.preventDefault();
     try {
       const url = isEditing
-        ? `http://localhost:5000/api/employees/${editingId}`
-        : 'http://localhost:5000/api/employees';
+        ? `${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`}/api/employees/${editingId}`
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/employees`;
 
       const method = isEditing ? 'PUT' : 'POST';
 

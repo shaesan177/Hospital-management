@@ -60,7 +60,7 @@ const Attendance: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/attendance?date=${selectedDate}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`}/api/attendance?date=${selectedDate}`);
       setAttendanceData(response.data);
     } catch (error) {
       console.error('Error fetching attendance:', error);
@@ -121,7 +121,7 @@ const Attendance: React.FC = () => {
         date: selectedDate
       };
 
-      await axios.post('http://localhost:5000/api/attendance', payload);
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/attendance`, payload);
       alert('Attendance updated successfully');
       fetchData();
       setFormData({

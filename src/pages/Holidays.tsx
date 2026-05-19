@@ -34,8 +34,8 @@ const Holidays: React.FC = () => {
   const fetchLeaves = async () => {
     try {
       const [allRes, upcomingRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/leaves'),
-        axios.get('http://localhost:5000/api/leaves/upcoming')
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/leaves`),
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/leaves/upcoming`)
       ]);
       setLeaves(allRes.data);
       setUpcomingLeaves(upcomingRes.data);
@@ -52,7 +52,7 @@ const Holidays: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/leaves/add', formData);
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/leaves/add`, formData);
       setIsModalOpen(false);
       setFormData({ leaveDate: '', reason: '', leaveDays: 1 });
       await fetchLeaves();
@@ -66,7 +66,7 @@ const Holidays: React.FC = () => {
   const handleDeleteLeave = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this holiday?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/leaves/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`}/api/leaves/${id}`);
       setSelectedEvent(null);
       await fetchLeaves();
     } catch (error) {
