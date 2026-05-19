@@ -17,9 +17,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Robust CORS origin handler to prevent trailing slash/path errors
+const getCorsOrigin = () => {
+  const url = process.env.FRONTEND_URL;
+  if (!url) return 'http://localhost:5173';
+  try {
+    const parsed = new URL(url);
+    return parsed.origin; // Extracts just 'https://domain.com'
+  } catch (e) {
+    return url.replace(/\/+$/, ''); // Fallback string strip
+  }
+};
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: getCorsOrigin(),
   credentials: true
 }));
 app.use(express.json());
