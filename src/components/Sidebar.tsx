@@ -1,7 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const userString = localStorage.getItem('user');
   const user = userString ? JSON.parse(userString) : { name: 'Admin', role: 'admin' };
@@ -24,18 +29,33 @@ const Sidebar: React.FC = () => {
   }
 
   return (
-    <aside className="w-[260px] bg-white border-r border-slate-200 flex flex-col fixed h-screen z-20">
-      <div className="p-8 flex items-center gap-3">
-        <div className="w-8 h-8 bg-[#003896] rounded-md flex items-center justify-center text-white">
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 2v20M2 12h20" />
-          </svg>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden backdrop-blur-sm"
+          onClick={onClose}
+        />
+      )}
+      
+      <aside className={`w-[260px] bg-white border-r border-slate-200 flex flex-col fixed h-screen z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="p-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#003896] rounded-md flex items-center justify-center text-white">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 2v20M2 12h20" />
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <h2 className="text-sm font-bold text-[#003896] leading-none mb-1">Medical Center</h2>
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider">ADMIN CONSOLE</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-slate-600">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
-        <div className="flex flex-col">
-          <h2 className="text-sm font-bold text-[#003896] leading-none mb-1">Medical Center</h2>
-          <span className="text-[10px] font-bold text-slate-400 tracking-wider">ADMIN CONSOLE</span>
-        </div>
-      </div>
+
 
       <nav className="flex-1 px-3 space-y-1">
         {navItems.map((item) => (
@@ -84,6 +104,7 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
     </aside>
+    </>
   );
 };
 
