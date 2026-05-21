@@ -39,19 +39,14 @@ const Overtime: React.FC = () => {
     fetchAttendance();
   }, [selectedDate]);
 
-  const getDecimalTime = (timeStr: string) => {
-    if (!timeStr || timeStr === '—' || timeStr === 'Pending' || timeStr === '-' || timeStr === '—') return null;
-    if (timeStr.includes('AM') || timeStr.includes('PM')) {
-      const parts = timeStr.split(' ');
-      const [time, modifier] = parts;
-      let [hours, minutes] = time.split(':').map(Number);
-      if (hours === 12) hours = 0;
-      if (modifier === 'PM') hours += 12;
-      return hours + (minutes || 0) / 60;
-    } else {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      return hours + (minutes || 0) / 60;
-    }
+  const getDecimalTimeRelative = (isoString: string, baseDateStr: string) => {
+    if (!isoString || isoString === '—' || isoString === 'Pending') return null;
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return null;
+    const [year, month, day] = baseDateStr.split('-');
+    const baseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    baseDate.setHours(0,0,0,0);
+    return (date.getTime() - baseDate.getTime()) / (1000 * 60 * 60);
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -123,31 +118,30 @@ const Overtime: React.FC = () => {
                 ) : attendanceRecords.length === 0 ? (
                   <tr><td colSpan={25} className="p-12 text-center text-slate-400 font-bold">No attendance records found for this date.</td></tr>
                 ) : attendanceRecords.map((record) => {
-                  const entryHour = getDecimalTime(record.checkIn);
-                  const exitHour = getDecimalTime(record.checkOut);
-                  const bStartHour = getDecimalTime(record.breakStart);
-                  const bEndHour = getDecimalTime(record.breakEnd);
+                  const entryHour = getDecimalTimeRelative(record.checkIn, selectedDate);
+                  const exitHour = getDecimalTimeRelative(record.checkOut, selectedDate);
+                  const bStartHour = getDecimalTimeRelative(record.breakStart, selectedDate);
+                  const bEndHour = getDecimalTimeRelative(record.breakEnd, selectedDate);
 
-                  let intervals: {start: number, end: number, isNextDay: boolean}[] = [];
+                  let intervals: {start: number, end: number}[] = [];
                   if (entryHour !== null && exitHour !== null) {
-                    const addInterval = (s: number, e: number, nextDay: boolean) => {
-                      if (e < s) {
-                        intervals.push({ start: s, end: 24, isNextDay: nextDay });
-                        intervals.push({ start: 0, end: e, isNextDay: true });
-                      } else {
-                        intervals.push({ start: s, end: e, isNextDay: nextDay });
-                      }
-                    };
-
                     if (bStartHour !== null && bEndHour !== null) {
-                      const bStartNextDay = bStartHour < entryHour;
-                      const bEndNextDay = bEndHour < bStartHour || (bStartNextDay && bEndHour >= bStartHour);
-                      
-                      addInterval(entryHour, bStartHour, false);
-                      addInterval(bEndHour, exitHour, bEndNextDay);
+                      intervals.push({ start: entryHour, end: bStartHour });
+                      intervals.push({ start: bEndHour, end: exitHour });
                     } else {
-                      addInterval(entryHour, exitHour, false);
+                      intervals.push({ start: entryHour, end: exitHour });
                     }
+                  }
+
+                  let otThreshold = Infinity;
+                  let accumulated = 0;
+                  for (let i = 0; i < intervals.length; i++) {
+                    const duration = intervals[i].end - intervals[i].start;
+                    if (accumulated + duration > 8) {
+                       otThreshold = intervals[i].start + (8 - accumulated);
+                       break;
+                    }
+                    accumulated += duration;
                   }
 
                   return (
@@ -164,32 +158,49 @@ const Overtime: React.FC = () => {
                         </div>
                       </td>
                       {Array.from({ length: 24 }).map((_, h) => {
-                        let fraction = 0;
-                        let isNextDayBlock = false;
+                        let fractionReg = 0;
+                        let fractionOT = 0;
+                        let isNightBlock = false;
                         for (const inv of intervals) {
                           const overlapStart = Math.max(h, inv.start);
                           const overlapEnd = Math.min(h + 1, inv.end);
                           if (overlapEnd > overlapStart) {
-                            fraction += (overlapEnd - overlapStart);
-                            if (inv.isNextDay) isNextDayBlock = true;
+                            if (overlapEnd <= otThreshold) {
+                              fractionReg += (overlapEnd - overlapStart);
+                            } else if (overlapStart >= otThreshold) {
+                              fractionOT += (overlapEnd - overlapStart);
+                            } else {
+                              fractionReg += (otThreshold - overlapStart);
+                              fractionOT += (overlapEnd - otThreshold);
+                            }
+                          }
+                          // Determine night shift
+                          if (inv.start >= 18 || inv.end <= 8 || inv.end > 24 || inv.start < 0) {
+                            isNightBlock = true;
                           }
                         }
                         
-                        // OT starts strictly at 8 PM (20:00)
-                        const isOT = h >= 20;
+                        const hasReg = fractionReg > 0;
+                        const hasOT = fractionOT > 0;
 
                         return (
-                          <td key={h} className={`border-r border-slate-50 text-center p-1 h-14 min-w-[45px] relative ${isOT ? 'bg-orange-50/10' : ''}`}>
-                            <div className="absolute inset-y-2 left-1 right-1 bg-slate-100 rounded-md overflow-hidden shadow-inner group-hover:bg-slate-200/50 transition-colors">
-                              {fraction > 0 && (
+                          <td key={h} className={`border-r border-slate-50 text-center p-1 h-14 min-w-[45px] relative`}>
+                            <div className="absolute inset-y-2 left-1 right-1 bg-slate-100 rounded-md overflow-hidden shadow-inner group-hover:bg-slate-200/50 transition-colors flex">
+                              {hasReg && (
                                 <div 
-                                  className={`absolute top-0 bottom-0 left-0 transition-all duration-500 ${isNextDayBlock ? 'bg-gradient-to-r from-indigo-400 to-purple-500 shadow-[0_0_10px_rgba(129,140,248,0.3)]' : isOT ? 'bg-gradient-to-r from-orange-400 to-amber-500 shadow-[0_0_10px_rgba(251,146,60,0.3)]' : 'bg-gradient-to-r from-emerald-400 to-green-500 shadow-[0_0_10px_rgba(52,211,153,0.3)]'}`}
-                                  style={{ width: `${fraction * 100}%` }}
+                                  className={`transition-all duration-500 ${isNightBlock ? 'bg-gradient-to-r from-indigo-400 to-purple-500' : 'bg-gradient-to-r from-emerald-400 to-green-500'}`}
+                                  style={{ width: `${fractionReg * 100}%` }}
                                 />
                               )}
-                              {fraction < 1 && fraction > 0 && (
-                                <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-slate-700/50 z-10">
-                                  {(fraction * 60).toFixed(0)}m
+                              {hasOT && (
+                                <div 
+                                  className={`transition-all duration-500 bg-gradient-to-r from-orange-400 to-amber-500`}
+                                  style={{ width: `${fractionOT * 100}%` }}
+                                />
+                              )}
+                              {(hasReg || hasOT) && (
+                                <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-slate-700/50 z-10 pointer-events-none">
+                                  {((fractionReg + fractionOT) * 60).toFixed(0)}m
                                 </span>
                               )}
                             </div>
@@ -219,7 +230,15 @@ const Overtime: React.FC = () => {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Employee Selection</label>
               <select 
                 value={formData.employeeId}
-                onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                onChange={(e) => {
+                  const empId = e.target.value;
+                  const record = attendanceRecords.find(r => r.employee._id === empId);
+                  setFormData({ 
+                    ...formData, 
+                    employeeId: empId,
+                    hours: record && record.otHours ? record.otHours.toString() : ''
+                  });
+                }}
                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                 required
               >

@@ -4,54 +4,15 @@ import Employee from '../models/Employee.js';
 
 const router = express.Router();
 
-// Helper to convert "HH:mm AM/PM" to decimal hours
-const timeToDecimal = (timeStr) => {
-  if (!timeStr || timeStr === '—' || timeStr === 'Pending') return null;
-  const parts = timeStr.split(' ');
-  if (parts.length !== 2) return null;
-  const [time, modifier] = parts;
-  let [hours, minutes] = time.split(':').map(Number);
-  if (hours === 12) hours = 0;
-  if (modifier === 'PM') hours += 12;
-  return hours + (minutes / 60);
+const calculateHours = (startMs, endMs) => {
+  if (!startMs || !endMs) return 0;
+  let diff = (new Date(endMs) - new Date(startMs)) / (1000 * 60 * 60);
+  return diff > 0 ? diff : 0;
 };
 
-const calculateHours = (start, end) => {
-  const startDec = timeToDecimal(start);
-  const endDec = timeToDecimal(end);
-  if (startDec === null || endDec === null) return 0;
-  let diff = endDec - startDec;
-  if (diff < 0) diff += 24; // Handle cross-midnight shifts
-  return diff;
-};
-
-const calculateOT = (start, end) => {
-  const startDec = timeToDecimal(start);
-  const endDec = timeToDecimal(end);
-  if (startDec === null || endDec === null) return 0;
-
-  const standardStart = 8; // 8:00 AM
-  const standardEnd = 20;  // 8:00 PM
-
-  if (endDec >= startDec) {
-    const total = endDec - startDec;
-    const overlapStart = Math.max(startDec, standardStart);
-    const overlapEnd = Math.min(endDec, standardEnd);
-    const overlap = Math.max(0, overlapEnd - overlapStart);
-    return total - overlap;
-  } else {
-    const total1 = 24 - startDec;
-    const overlapStart1 = Math.max(startDec, standardStart);
-    const overlapEnd1 = Math.min(24, standardEnd);
-    const overlap1 = Math.max(0, overlapEnd1 - overlapStart1);
-    
-    const total2 = endDec;
-    const overlapStart2 = Math.max(0, standardStart);
-    const overlapEnd2 = Math.min(endDec, standardEnd);
-    const overlap2 = Math.max(0, overlapEnd2 - overlapStart2);
-    
-    return (total1 - overlap1) + (total2 - overlap2);
-  }
+// Overtime is any Net Worked hours exceeding standard 8-hour shift.
+const calculateOT = (netHours) => {
+  return netHours > 8 ? netHours - 8 : 0;
 };
 
 // Get attendance for all employees by date
@@ -64,7 +25,13 @@ router.get('/', async (req, res) => {
 
     const employees = await Employee.find();
     const attendanceRecords = await Attendance.find({
-      date: { $gte: startOfDay, $lte: endOfDay }
+      $or: [
+        { date: { $gte: startOfDay, $lte: endOfDay } },
+        { 
+          checkIn: { $lt: endOfDay },
+          checkOut: { $gt: startOfDay }
+        }
+      ]
     });
 
     const result = employees.map(emp => {
@@ -72,10 +39,10 @@ router.get('/', async (req, res) => {
       return {
         employee: emp,
         status: record ? record.status : 'ABSENT',
-        checkIn: record ? record.checkIn : '—',
-        breakStart: record ? record.breakStart : '—',
-        breakEnd: record ? record.breakEnd : '—',
-        checkOut: record ? record.checkOut : '—',
+        checkIn: record ? record.checkIn : null,
+        breakStart: record ? record.breakStart : null,
+        breakEnd: record ? record.breakEnd : null,
+        checkOut: record ? record.checkOut : null,
         totalHours: record ? record.totalHours : 0,
         breakDuration: record ? record.breakDuration : 0,
         netHours: record ? record.netHours : 0,
@@ -101,7 +68,7 @@ router.post('/', async (req, res) => {
     const totalHours = calculateHours(checkIn, checkOut);
     const breakDuration = calculateHours(breakStart, breakEnd);
     const netHours = Math.max(0, totalHours - breakDuration);
-    const otHours = calculateOT(checkIn, checkOut);
+    const otHours = calculateOT(netHours);
 
     // Completion Status logic
     let completionStatus = 'Pending';
@@ -116,7 +83,11 @@ router.post('/', async (req, res) => {
     const attendance = await Attendance.findOneAndUpdate(
       { employee: employeeId, date: new Date(date).setHours(0,0,0,0) },
       { 
-        status, checkIn, breakStart, breakEnd, checkOut, 
+        status, 
+        checkIn: checkIn ? new Date(checkIn) : null, 
+        breakStart: breakStart ? new Date(breakStart) : null, 
+        breakEnd: breakEnd ? new Date(breakEnd) : null, 
+        checkOut: checkOut ? new Date(checkOut) : null, 
         totalHours, breakDuration, netHours, otHours,
         natureOfWork, completionStatus
       },

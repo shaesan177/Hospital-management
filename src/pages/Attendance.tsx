@@ -9,41 +9,28 @@ const Attendance: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
   
-  // Helpers to convert between 12h (backend) and 24h (input type="time")
-  const formatTimeTo12h = (time24: string) => {
-    if (!time24) return '';
-    const [hours, minutes] = time24.split(':');
-    let h = parseInt(hours);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12;
-    return `${h.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+  const formatTimeTo12h = (isoString: string) => {
+    if (!isoString || isoString === '—' || isoString === 'Pending') return '—';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
-  const formatTimeForInput = (time12h: string) => {
-    if (!time12h || time12h === '—' || time12h === 'Pending' || time12h === '-') return '';
-    const parts = time12h.split(' ');
-    if (parts.length !== 2) return '';
-    const [time, modifier] = parts;
-    let [hours, minutes] = time.split(':');
-    if (hours === '12') hours = '00';
-    if (modifier === 'PM') hours = (parseInt(hours, 10) + 12).toString();
-    return `${hours.padStart(2, '0')}:${minutes}`;
+  const formatTimeForInput = (isoString: string) => {
+    if (!isoString || isoString === '—' || isoString === 'Pending') return '';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  const getDecimalTime = (timeStr: string) => {
-    if (!timeStr || timeStr === '—' || timeStr === 'Pending' || timeStr === '-' || timeStr === '—') return null;
-    if (timeStr.includes('AM') || timeStr.includes('PM')) {
-      const parts = timeStr.split(' ');
-      const [time, modifier] = parts;
-      let [hours, minutes] = time.split(':').map(Number);
-      if (hours === 12) hours = 0;
-      if (modifier === 'PM') hours += 12;
-      return hours + (minutes || 0) / 60;
-    } else {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      return hours + (minutes || 0) / 60;
-    }
+  const getDecimalTimeRelative = (isoString: string, baseDateStr: string) => {
+    if (!isoString || isoString === '—' || isoString === 'Pending') return null;
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return null;
+    const [year, month, day] = baseDateStr.split('-');
+    const baseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    baseDate.setHours(0,0,0,0);
+    return (date.getTime() - baseDate.getTime()) / (1000 * 60 * 60);
   };
 
   // Form State
@@ -102,22 +89,27 @@ const Attendance: React.FC = () => {
     const breakStartDec = formData.breakStart ? parseInt(formData.breakStart.replace(':', '')) : 0;
     const breakEndDec = formData.breakEnd ? parseInt(formData.breakEnd.replace(':', '')) : 0;
 
-    if (formData.checkIn && formData.checkOut && checkOutDec < checkInDec) {
-      alert('Check-out cannot be before check-in');
-      return;
-    }
-    if (formData.breakStart && formData.breakEnd && breakEndDec < breakStartDec) {
-      alert('Break-end cannot be before break-start');
-      return;
-    }
+    const isCheckOutNextDay = formData.checkOut && checkOutDec < checkInDec;
+    const isBreakStartNextDay = formData.breakStart && breakStartDec < checkInDec;
+    const isBreakEndNextDay = formData.breakEnd && (breakEndDec < breakStartDec || (isBreakStartNextDay && breakEndDec >= breakStartDec));
+
+    const createDateStr = (timeStr: string, isNextDay: boolean = false) => {
+      if (!timeStr) return null;
+      const [year, month, day] = selectedDate.split('-');
+      const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      const [h, m] = timeStr.split(':');
+      d.setHours(parseInt(h), parseInt(m), 0, 0);
+      if (isNextDay) d.setDate(d.getDate() + 1);
+      return d.toISOString();
+    };
 
     try {
       const payload = {
         ...formData,
-        checkIn: formatTimeTo12h(formData.checkIn),
-        breakStart: formatTimeTo12h(formData.breakStart),
-        breakEnd: formatTimeTo12h(formData.breakEnd),
-        checkOut: formatTimeTo12h(formData.checkOut),
+        checkIn: createDateStr(formData.checkIn, false),
+        breakStart: createDateStr(formData.breakStart, isBreakStartNextDay),
+        breakEnd: createDateStr(formData.breakEnd, isBreakEndNextDay),
+        checkOut: createDateStr(formData.checkOut, isCheckOutNextDay),
         date: selectedDate
       };
 
@@ -219,11 +211,11 @@ const Attendance: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50/50">
                   <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-100">Employee</th>
+                  <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Shift Type</th>
+                  <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Dates</th>
                   <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Check-In</th>
-                  <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Break</th>
                   <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Check-Out</th>
-                  <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Break Dur.</th>
-                  <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Net Worked</th>
+                  <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Total Hours</th>
                   <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">OT Hours</th>
                   <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center min-w-[320px]">Shift Timeline (24H)</th>
                   <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
@@ -248,25 +240,31 @@ const Attendance: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <span className="text-sm font-bold text-slate-700">{item.checkIn}</span>
+                      {(() => {
+                        const h = item.checkIn ? new Date(item.checkIn).getHours() : null;
+                        if (h === null) return <span className="text-slate-300">—</span>;
+                        const shiftType = h >= 6 && h < 14 ? 'Day Shift' : h >= 14 && h < 22 ? 'Evening Shift' : 'Night Shift';
+                        const sColor = shiftType === 'Night Shift' ? 'text-indigo-600 bg-indigo-50 border-indigo-200' : shiftType === 'Evening Shift' ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-emerald-600 bg-emerald-50 border-emerald-200';
+                        return <span className={`px-2 py-1 rounded-md text-[9px] font-black tracking-widest border ${sColor} whitespace-nowrap`}>{shiftType}</span>;
+                      })()}
+                    </td>
+                    <td className="px-4 py-4 text-center text-xs font-bold text-slate-600 whitespace-nowrap">
+                      {(() => {
+                        if (!item.checkIn) return '—';
+                        const startD = new Date(item.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        if (!item.checkOut) return startD;
+                        const endD = new Date(item.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        return startD === endD ? startD : `${startD} - ${endD}`;
+                      })()}
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] font-bold text-slate-400">S: {item.breakStart}</span>
-                        <span className="text-[10px] font-bold text-slate-400">E: {item.breakEnd}</span>
-                      </div>
+                      <span className="text-sm font-bold text-slate-700">{formatTimeTo12h(item.checkIn)}</span>
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <span className="text-sm font-bold text-slate-700">{item.checkOut}</span>
+                      <span className="text-sm font-bold text-slate-700">{formatTimeTo12h(item.checkOut)}</span>
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <span className="text-sm font-black text-slate-500">{item.breakDuration.toFixed(1)}h</span>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <div className="flex flex-col items-center">
-                        <span className="text-sm font-black text-[#003896]">{item.netHours.toFixed(1)}h</span>
-                        <span className="text-[8px] font-black text-slate-300 uppercase">Gross: {item.totalHours.toFixed(1)}h</span>
-                      </div>
+                      <span className="text-sm font-black text-[#003896]">{item.totalHours.toFixed(1)}h</span>
                     </td>
                     <td className="px-4 py-4 text-center">
                       {item.otHours > 0 ? (
@@ -277,60 +275,77 @@ const Attendance: React.FC = () => {
                     </td>
                     <td className="px-4 py-4">
                       {(() => {
-                        const entryHour = getDecimalTime(item.checkIn);
-                        const exitHour = getDecimalTime(item.checkOut);
-                        const bStartHour = getDecimalTime(item.breakStart);
-                        const bEndHour = getDecimalTime(item.breakEnd);
+                        const entryHour = getDecimalTimeRelative(item.checkIn, selectedDate);
+                        const exitHour = getDecimalTimeRelative(item.checkOut, selectedDate);
+                        const bStartHour = getDecimalTimeRelative(item.breakStart, selectedDate);
+                        const bEndHour = getDecimalTimeRelative(item.breakEnd, selectedDate);
 
-                        let intervals: {start: number, end: number, isNextDay: boolean}[] = [];
+                        let intervals: {start: number, end: number}[] = [];
                         if (entryHour !== null && exitHour !== null) {
-                          const addInterval = (s: number, e: number, nextDay: boolean) => {
-                            if (e < s) {
-                              intervals.push({ start: s, end: 24, isNextDay: nextDay });
-                              intervals.push({ start: 0, end: e, isNextDay: true });
-                            } else {
-                              intervals.push({ start: s, end: e, isNextDay: nextDay });
-                            }
-                          };
-
                           if (bStartHour !== null && bEndHour !== null) {
-                            const bStartNextDay = bStartHour < entryHour;
-                            const bEndNextDay = bEndHour < bStartHour || (bStartNextDay && bEndHour >= bStartHour);
-                            
-                            addInterval(entryHour, bStartHour, false);
-                            addInterval(bEndHour, exitHour, bEndNextDay);
+                            intervals.push({ start: entryHour, end: bStartHour });
+                            intervals.push({ start: bEndHour, end: exitHour });
                           } else {
-                            addInterval(entryHour, exitHour, false);
+                            intervals.push({ start: entryHour, end: exitHour });
                           }
+                        }
+                        
+                        let otThreshold = Infinity;
+                        let accumulated = 0;
+                        for (let i = 0; i < intervals.length; i++) {
+                          const duration = intervals[i].end - intervals[i].start;
+                          if (accumulated + duration > 8) {
+                             otThreshold = intervals[i].start + (8 - accumulated);
+                             break;
+                          }
+                          accumulated += duration;
                         }
 
                         return (
                            <div className="flex items-center gap-[2px] justify-center">
                               {Array.from({ length: 24 }).map((_, h) => {
-                                let fraction = 0;
-                                let isNextDayBlock = false;
+                                let fractionReg = 0;
+                                let fractionOT = 0;
+                                let isNightBlock = false;
                                 for (const inv of intervals) {
                                   const overlapStart = Math.max(h, inv.start);
                                   const overlapEnd = Math.min(h + 1, inv.end);
                                   if (overlapEnd > overlapStart) {
-                                    fraction += (overlapEnd - overlapStart);
-                                    if (inv.isNextDay) isNextDayBlock = true;
+                                    if (overlapEnd <= otThreshold) {
+                                      fractionReg += (overlapEnd - overlapStart);
+                                    } else if (overlapStart >= otThreshold) {
+                                      fractionOT += (overlapEnd - overlapStart);
+                                    } else {
+                                      fractionReg += (otThreshold - overlapStart);
+                                      fractionOT += (overlapEnd - otThreshold);
+                                    }
+                                  }
+                                  // Determine night shift if the original interval started in evening/night or next day morning
+                                  if (inv.start >= 18 || inv.end <= 8 || inv.end > 24 || inv.start < 0) {
+                                    isNightBlock = true;
                                   }
                                 }
                                 
-                                const isOT = h >= 20;
+                                const hasReg = fractionReg > 0;
+                                const hasOT = fractionOT > 0;
 
                                 return (
-                                  <div key={h} className="relative w-3 h-5 bg-slate-100 rounded-sm overflow-hidden flex-shrink-0 shadow-inner group">
-                                    {fraction > 0 && (
+                                  <div key={h} className="relative w-3 h-5 bg-slate-100 rounded-sm overflow-hidden flex-shrink-0 shadow-inner group flex">
+                                    {hasReg && (
                                       <div 
-                                        className={`absolute top-0 bottom-0 left-0 transition-all duration-300 ${isNextDayBlock ? 'bg-indigo-400' : isOT ? 'bg-orange-400' : 'bg-emerald-400'}`}
-                                        style={{ width: `${fraction * 100}%` }}
+                                        className={`transition-all duration-300 ${isNightBlock ? 'bg-indigo-400' : 'bg-emerald-400'}`}
+                                        style={{ width: `${fractionReg * 100}%` }}
+                                      />
+                                    )}
+                                    {hasOT && (
+                                      <div 
+                                        className={`transition-all duration-300 bg-orange-400`}
+                                        style={{ width: `${fractionOT * 100}%` }}
                                       />
                                     )}
                                     {/* Tooltip for hover */}
                                     <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-white text-[8px] font-bold rounded pointer-events-none whitespace-nowrap z-50">
-                                      {h}:00 - {h+1}:00 ({fraction > 0 ? (fraction * 60).toFixed(0) + 'm' : 'Empty'})
+                                      {h}:00 - {h+1}:00 (Reg: {(fractionReg * 60).toFixed(0)}m, OT: {(fractionOT * 60).toFixed(0)}m)
                                     </div>
                                   </div>
                                 );
@@ -511,24 +526,14 @@ const Attendance: React.FC = () => {
                   <span className="text-[10px] font-black text-orange-500 uppercase">Est. OT Hours</span>
                   <p className="text-lg font-black text-orange-500">
                     {(() => {
-                      const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1])/60 : null;
-                      const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1])/60 : null;
-                      if (s1 === null || e1 === null) return '0.0';
-                      let ot = 0;
-                      if (e1 >= s1) {
-                        const overlapStart = Math.max(s1, 8);
-                        const overlapEnd = Math.min(e1, 20);
-                        const overlap = Math.max(0, overlapEnd - overlapStart);
-                        ot = (e1 - s1) - overlap;
-                      } else {
-                        const overlapStart1 = Math.max(s1, 8);
-                        const overlapEnd1 = Math.min(24, 20);
-                        const overlap1 = Math.max(0, overlapEnd1 - overlapStart1);
-                        const overlapStart2 = Math.max(0, 8);
-                        const overlapEnd2 = Math.min(e1, 20);
-                        const overlap2 = Math.max(0, overlapEnd2 - overlapStart2);
-                        ot = ((24 - s1) - overlap1) + (e1 - overlap2);
-                      }
+                      const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1])/60 : 0;
+                      const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1])/60 : 0;
+                      let total = e1 - s1; if (total < 0) total += 24;
+                      const s2 = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1])/60 : 0;
+                      const e2 = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1])/60 : 0;
+                      let brk = e2 - s2; if (brk < 0) brk += 24;
+                      const net = Math.max(0, total - brk);
+                      const ot = Math.max(0, net - 8);
                       return ot.toFixed(1);
                     })()}h
                   </p>
