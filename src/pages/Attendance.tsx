@@ -89,9 +89,9 @@ const Attendance: React.FC = () => {
     const breakStartDec = formData.breakStart ? parseInt(formData.breakStart.replace(':', '')) : 0;
     const breakEndDec = formData.breakEnd ? parseInt(formData.breakEnd.replace(':', '')) : 0;
 
-    const isCheckOutNextDay = formData.checkOut && checkOutDec < checkInDec;
-    const isBreakStartNextDay = formData.breakStart && breakStartDec < checkInDec;
-    const isBreakEndNextDay = formData.breakEnd && (breakEndDec < breakStartDec || (isBreakStartNextDay && breakEndDec >= breakStartDec));
+    const isCheckOutNextDay = Boolean(formData.checkOut && checkOutDec < checkInDec);
+    const isBreakStartNextDay = Boolean(formData.breakStart && breakStartDec < checkInDec);
+    const isBreakEndNextDay = Boolean(formData.breakEnd && (breakEndDec < breakStartDec || (isBreakStartNextDay && breakEndDec >= breakStartDec)));
 
     const createDateStr = (timeStr: string, isNextDay: boolean = false) => {
       if (!timeStr) return null;

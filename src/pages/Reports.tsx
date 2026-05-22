@@ -1,29 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import axios from 'axios';
 
 const Reports: React.FC = () => {
-  const topStats = [
-    { label: 'TOTAL HEADCOUNT', value: '1,284', trend: '+2.4%', detail1: 'Active: 1,210', detail2: 'On Leave: 74', color: 'text-emerald-500' },
-    { label: 'AVG. ATTENDANCE', value: '94.2%', trend: '-0.8%', detail1: 'Target: 95%', detail2: 'Variance: -0.8%', color: 'text-rose-500' },
-    { label: 'MONTHLY PAYROLL', value: '₹2.4M', trend: '+4.1%', detail1: 'Salary: ₹2.1M', detail2: 'Bonus: ₹0.3M', color: 'text-emerald-500' },
-    { label: 'OVERTIME COST', value: '₹142K', trend: '+12%', detail1: 'Budget: ₹150K', detail2: 'Remaining: ₹8K', color: 'text-amber-500' },
-  ];
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const departmentalBreakdown = [
-    { name: 'Cardiology Unit', staff: 124, efficiency: '98.2%', budget: 82, color: 'bg-emerald-500' },
-    { name: 'Emergency Room', staff: 240, efficiency: '94.5%', budget: 95, color: 'bg-blue-600' },
-    { name: 'Neurology Dept.', staff: 82, efficiency: '88.1%', budget: 64, color: 'bg-amber-500' },
-    { name: 'Radiology Services', staff: 56, efficiency: '92.0%', budget: 78, color: 'bg-emerald-400' },
-    { name: 'Outpatient Clinic', staff: 185, efficiency: '76.4%', budget: 42, color: 'bg-slate-400' },
-  ];
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reports`);
+        setData(response.data);
+      } catch (error) {
+        console.error('Error fetching reports data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReports();
+  }, []);
 
-  const overtimeAnalysis = [
-    { ref: '#Oi -4921', unit: 'Emergency Services', hours: '42.5 hrs', cost: '₹12,450', intensity: 'CRITICAL', intensityColor: 'bg-rose-50 text-rose-600 border-rose-100' },
-    { ref: '#Oi -4882', unit: 'Surgical Theatre', hours: '38.0 hrs', cost: '₹11,200', intensity: 'HIGH', intensityColor: 'bg-orange-50 text-orange-600 border-orange-100' },
-    { ref: '#Oi -4876', unit: 'Nursing Support', hours: '112.5 hrs', cost: '₹8,900', intensity: 'STANDARD', intensityColor: 'bg-blue-50 text-blue-600 border-blue-100' },
-    { ref: '#Oi -4860', unit: 'Admin Ops', hours: '12.0 hrs', cost: '₹1,450', intensity: 'LOW', intensityColor: 'bg-slate-50 text-slate-500 border-slate-100' },
-    { ref: '#Oi -4855', unit: 'ICU Night Shift', hours: '28.5 hrs', cost: '₹7,200', intensity: 'HIGH', intensityColor: 'bg-orange-50 text-orange-600 border-orange-100' },
-  ];
+  if (loading) {
+    return (
+      <Layout title="HMS Portal">
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003896]"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const { 
+    topStats = [], 
+    departmentalBreakdown = [], 
+    overtimeAnalysis = [], 
+    staffDistribution = [], 
+    totalHeadcount = 0 
+  } = data || {};
 
   return (
     <Layout title="HMS Portal" searchPlaceholder="Search analytics...">
@@ -60,7 +73,7 @@ const Reports: React.FC = () => {
 
         {/* Top Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-          {topStats.map((stat, idx) => (
+          {topStats.map((stat: any, idx: number) => (
             <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
               <div className="flex justify-between items-start mb-4">
                 <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">{stat.label}</span>
@@ -138,7 +151,7 @@ const Reports: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {departmentalBreakdown.map((dept, idx) => (
+                  {departmentalBreakdown.map((dept: any, idx: number) => (
                     <tr key={idx} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 text-xs font-black text-slate-900">{dept.name}</td>
                       <td className="px-4 py-4 text-xs font-bold text-slate-500 text-center">{dept.staff}</td>
@@ -171,16 +184,12 @@ const Reports: React.FC = () => {
                 <circle cx="18" cy="18" r="16" fill="none" stroke="#cbd5e1" strokeWidth="4" strokeDasharray="10, 100" strokeDashoffset="-65"></circle>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-black text-slate-900 leading-none">1,284</span>
+                <span className="text-2xl font-black text-slate-900 leading-none">{totalHeadcount || 0}</span>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Employees</span>
               </div>
             </div>
             <div className="space-y-4">
-              {[
-                { label: 'Medical Staff', value: '70%', color: 'bg-[#003896]' },
-                { label: 'Administrative', value: '20%', color: 'bg-[#2563eb]' },
-                { label: 'Support Services', value: '10%', color: 'bg-[#cbd5e1]' },
-              ].map((item, idx) => (
+              {staffDistribution?.map((item: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
@@ -220,7 +229,7 @@ const Reports: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {overtimeAnalysis.map((item, idx) => (
+                  {overtimeAnalysis.map((item: any, idx: number) => (
                     <tr key={idx} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-5 text-xs font-bold text-slate-500">{item.ref}</td>
                       <td className="px-6 py-5 text-xs font-black text-slate-900">{item.unit}</td>
