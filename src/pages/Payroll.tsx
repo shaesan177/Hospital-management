@@ -1,19 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
 const Payroll: React.FC = () => {
-  const employees = [
-    { name: 'Sarah Jenkins', role: 'Chief Administrator', basic: '₹8,500.00', ot: '₹0.00', allowances: '₹1,200.00', gross: '₹9,700.00', deductions: '(₹2,425.00)', net: '₹7,275.00', status: 'PENDING', initial: 'SJ', color: 'bg-blue-100 text-blue-600' },
-    { name: 'Michael Lee', role: 'Senior Nurse (ER)', basic: '₹5,200.00', ot: '₹1,450.00', allowances: '₹850.00', gross: '₹7,500.00', deductions: '(₹1,875.00)', net: '₹5,625.00', status: 'APPROVED', initial: 'ML', color: 'bg-emerald-100 text-emerald-600' },
-    { name: 'Alice Wong', role: 'Radiology Tech', basic: '₹4,800.00', ot: '₹320.00', allowances: '₹600.00', gross: '₹5,720.00', deductions: '(₹1,430.00)', net: '₹4,290.00', status: 'APPROVED', initial: 'AW', color: 'bg-purple-100 text-purple-600' },
-    { name: 'Robert Brown', role: 'IT Support Specialist', basic: '₹4,200.00', ot: '₹840.00', allowances: '₹400.00', gross: '₹5,440.00', deductions: '(₹1,360.00)', net: '₹4,080.00', status: 'ON HOLD', initial: 'RB', color: 'bg-slate-100 text-slate-600' },
-  ];
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPayroll = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll`);
+        const data = await response.json();
+        setEmployees(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching payroll:', error);
+        setLoading(false);
+      }
+    };
+    fetchPayroll();
+  }, []);
+
+  const totalGross = employees.reduce((sum, emp) => sum + (emp.gross || 0), 0);
+  const totalOT = employees.reduce((sum, emp) => sum + (emp.otPay || 0), 0);
+  const totalDeductions = employees.reduce((sum, emp) => sum + (emp.deductions || 0), 0);
+  const totalNet = employees.reduce((sum, emp) => sum + (emp.net || 0), 0);
 
   const stats = [
-    { label: 'TOTAL GROSS', value: '₹1,452,890.00', trend: '+2.4% vs last month', icon: <TrendIcon />, color: 'text-emerald-500' },
-    { label: 'OT PAYMENTS', value: '₹84,120.50', trend: '4.8% of total payroll', icon: <ClockIcon />, color: 'text-orange-500' },
-    { label: 'TOTAL DEDUCTIONS', value: '₹312,450.25', trend: 'Taxes, Insurance, PF', icon: <FileTextIcon />, color: 'text-rose-500' },
-    { label: 'NET PAYABLE', value: '₹1,140,439.75', trend: '1,248 Recipients', icon: <CheckCircleIcon />, color: 'text-blue-500' },
+    { label: 'TOTAL GROSS', value: `₹${totalGross.toLocaleString(undefined, {minimumFractionDigits: 2})}`, trend: 'Current Month', icon: <TrendIcon />, color: 'text-emerald-500' },
+    { label: 'OT PAYMENTS', value: `₹${totalOT.toLocaleString(undefined, {minimumFractionDigits: 2})}`, trend: 'Current Month', icon: <ClockIcon />, color: 'text-orange-500' },
+    { label: 'TOTAL DEDUCTIONS', value: `₹${totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}`, trend: 'Leave Penalties', icon: <FileTextIcon />, color: 'text-rose-500' },
+    { label: 'NET PAYABLE', value: `₹${totalNet.toLocaleString(undefined, {minimumFractionDigits: 2})}`, trend: `${employees.length} Recipients`, icon: <CheckCircleIcon />, color: 'text-blue-500' },
   ];
 
   return (
@@ -86,7 +102,6 @@ const Payroll: React.FC = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[200px]">Employee & Role</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Basic Pay</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">OT Pay</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Allowances</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Gross Pay</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Deductions</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[120px]">Net Payable</th>
@@ -94,11 +109,13 @@ const Payroll: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {employees.map((emp, idx) => (
+                {loading ? (
+                  <tr><td colSpan={7} className="text-center py-10 text-slate-400 font-bold">Calculating Payroll Data...</td></tr>
+                ) : employees.map((emp, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl shrink-0 ${emp.color} flex items-center justify-center text-xs font-black`}>
+                        <div className={`w-10 h-10 rounded-xl shrink-0 ${emp.color || 'bg-slate-100 text-slate-600'} flex items-center justify-center text-xs font-black`}>
                           {emp.initial}
                         </div>
                         <div>
@@ -107,12 +124,11 @@ const Payroll: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-sm font-bold text-slate-700 text-right">{emp.basic}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-slate-700 text-right">{emp.ot}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-slate-700 text-right">{emp.allowances}</td>
-                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">{emp.gross}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-rose-500 text-right">{emp.deductions}</td>
-                    <td className="px-6 py-5 text-sm font-black text-[#003896] text-right">{emp.net}</td>
+                    <td className="px-6 py-5 text-sm font-bold text-slate-700 text-right">₹{(emp.basic || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-bold text-slate-700 text-right">₹{(emp.otPay || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{(emp.gross || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-bold text-rose-500 text-right">(₹{(emp.deductions || 0).toLocaleString(undefined, {minimumFractionDigits: 2})})</td>
+                    <td className="px-6 py-5 text-sm font-black text-[#003896] text-right">₹{(emp.net || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td className="px-6 py-5 text-center">
                       <span className={`px-2 py-1 rounded-md text-[9px] font-black tracking-wider border ${emp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                           emp.status === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100' :
@@ -124,24 +140,25 @@ const Payroll: React.FC = () => {
                   </tr>
                 ))}
                 {/* Sub-totals row */}
-                <tr className="bg-slate-50/80">
-                  <td className="px-6 py-5">
-                    <h4 className="text-base font-black text-slate-900">Sub-totals (Page)</h4>
-                  </td>
-                  <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹22,700.00</td>
-                  <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹2,610.00</td>
-                  <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹3,050.00</td>
-                  <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹28,360.00</td>
-                  <td className="px-6 py-5 text-sm font-black text-rose-600 text-right">(₹7,090.00)</td>
-                  <td className="px-6 py-5 text-base font-black text-[#003896] text-right">₹21,270.00</td>
-                  <td></td>
-                </tr>
+                {!loading && employees.length > 0 && (
+                  <tr className="bg-slate-50/80">
+                    <td className="px-6 py-5">
+                      <h4 className="text-base font-black text-slate-900">Totals</h4>
+                    </td>
+                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{employees.reduce((acc, emp) => acc + (emp.basic || 0), 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{totalOT.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{totalGross.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-black text-rose-600 text-right">(₹{totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})})</td>
+                    <td className="px-6 py-5 text-base font-black text-[#003896] text-right">₹{totalNet.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td></td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
           <div className="p-4 md:p-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">Displaying 25 of 1,248 Employee Records</p>
+            <p className="text-xs font-bold text-slate-400 text-center sm:text-left">Displaying {employees.length} Employee Records</p>
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-400">Rows per page:</span>

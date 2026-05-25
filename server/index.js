@@ -12,6 +12,7 @@ import leaveRoutes from './routes/leaveRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import payrollRoutes from './routes/payrollRoutes.js';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ app.use('/api/leaves', leaveRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/payroll', payrollRoutes);
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hospital-management';

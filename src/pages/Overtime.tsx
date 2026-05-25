@@ -137,8 +137,8 @@ const Overtime: React.FC = () => {
                   let accumulated = 0;
                   for (let i = 0; i < intervals.length; i++) {
                     const duration = intervals[i].end - intervals[i].start;
-                    if (accumulated + duration > 8) {
-                       otThreshold = intervals[i].start + (8 - accumulated);
+                    if (accumulated + duration > 10) {
+                       otThreshold = intervals[i].start + (10 - accumulated);
                        break;
                     }
                     accumulated += duration;
@@ -158,49 +158,55 @@ const Overtime: React.FC = () => {
                         </div>
                       </td>
                       {Array.from({ length: 24 }).map((_, h) => {
-                        let fractionReg = 0;
-                        let fractionOT = 0;
+                        let fractionRegForTooltip = 0;
+                        let fractionOTForTooltip = 0;
+                        let isVisuallyActive = false;
+                        let isVisuallyOT = false;
                         let isNightBlock = false;
+
                         for (const inv of intervals) {
                           const overlapStart = Math.max(h, inv.start);
                           const overlapEnd = Math.min(h + 1, inv.end);
                           if (overlapEnd > overlapStart) {
                             if (overlapEnd <= otThreshold) {
-                              fractionReg += (overlapEnd - overlapStart);
+                              fractionRegForTooltip += (overlapEnd - overlapStart);
                             } else if (overlapStart >= otThreshold) {
-                              fractionOT += (overlapEnd - overlapStart);
+                              fractionOTForTooltip += (overlapEnd - overlapStart);
                             } else {
-                              fractionReg += (otThreshold - overlapStart);
-                              fractionOT += (overlapEnd - otThreshold);
+                              fractionRegForTooltip += (otThreshold - overlapStart);
+                              fractionOTForTooltip += (overlapEnd - otThreshold);
                             }
                           }
+
+                          if (h >= Math.floor(inv.start) && h <= Math.floor(inv.end)) {
+                            isVisuallyActive = true;
+                            if (h >= Math.floor(otThreshold)) {
+                              isVisuallyOT = true;
+                            }
+                          }
+
                           // Determine night shift
                           if (inv.start >= 18 || inv.end <= 8 || inv.end > 24 || inv.start < 0) {
                             isNightBlock = true;
                           }
                         }
-                        
-                        const hasReg = fractionReg > 0;
-                        const hasOT = fractionOT > 0;
 
                         return (
                           <td key={h} className={`border-r border-slate-50 text-center p-1 h-14 min-w-[45px] relative`}>
                             <div className="absolute inset-y-2 left-1 right-1 bg-slate-100 rounded-md overflow-hidden shadow-inner group-hover:bg-slate-200/50 transition-colors flex">
-                              {hasReg && (
+                              {isVisuallyActive && !isVisuallyOT && (
                                 <div 
-                                  className={`transition-all duration-500 ${isNightBlock ? 'bg-gradient-to-r from-indigo-400 to-purple-500' : 'bg-gradient-to-r from-emerald-400 to-green-500'}`}
-                                  style={{ width: `${fractionReg * 100}%` }}
+                                  className={`transition-all duration-500 w-full ${isNightBlock ? 'bg-gradient-to-r from-indigo-400 to-purple-500' : 'bg-gradient-to-r from-emerald-400 to-green-500'}`}
                                 />
                               )}
-                              {hasOT && (
+                              {isVisuallyActive && isVisuallyOT && (
                                 <div 
-                                  className={`transition-all duration-500 bg-gradient-to-r from-orange-400 to-amber-500`}
-                                  style={{ width: `${fractionOT * 100}%` }}
+                                  className={`transition-all duration-500 w-full bg-gradient-to-r from-orange-400 to-amber-500`}
                                 />
                               )}
-                              {(hasReg || hasOT) && (
+                              {(fractionRegForTooltip > 0 || fractionOTForTooltip > 0) && (
                                 <span className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-slate-700/50 z-10 pointer-events-none">
-                                  {((fractionReg + fractionOT) * 60).toFixed(0)}m
+                                  {((fractionRegForTooltip + fractionOTForTooltip) * 60).toFixed(0)}m
                                 </span>
                               )}
                             </div>

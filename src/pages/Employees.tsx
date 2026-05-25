@@ -16,7 +16,8 @@ const Employees: React.FC = () => {
     designation: '',
     status: 'ON-DUTY',
     fatherName: '',
-    sex: 'Male'
+    sex: 'Male',
+    basicSalary: ''
   });
 
   const fetchEmployees = async () => {
@@ -51,7 +52,8 @@ const Employees: React.FC = () => {
       designation: '',
       status: 'ON-DUTY',
       fatherName: '',
-      sex: 'Male'
+      sex: 'Male',
+      basicSalary: ''
     });
     setIsModalOpen(true);
   };
@@ -67,7 +69,8 @@ const Employees: React.FC = () => {
       designation: emp.designation,
       status: emp.status,
       fatherName: emp.fatherName || '',
-      sex: emp.sex || 'Male'
+      sex: emp.sex || 'Male',
+      basicSalary: emp.basicSalary || ''
     });
     setIsModalOpen(true);
   };
@@ -113,7 +116,8 @@ const Employees: React.FC = () => {
           designation: '',
           status: 'ON-DUTY',
           fatherName: '',
-          sex: 'Male'
+          sex: 'Male',
+          basicSalary: ''
         });
       }
     } catch (error) {
@@ -250,6 +254,10 @@ const Employees: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Designation</label>
                   <input required name="designation" value={formData.designation} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. Senior Consultant" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Basic Salary (₹)</label>
+                  <input required type="number" name="basicSalary" value={formData.basicSalary} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. 15000" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Father's Name</label>

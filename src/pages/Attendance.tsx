@@ -8,7 +8,7 @@ const Attendance: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
-  
+
   const formatTimeTo12h = (isoString: string) => {
     if (!isoString || isoString === '—' || isoString === 'Pending') return '—';
     const date = new Date(isoString);
@@ -29,7 +29,7 @@ const Attendance: React.FC = () => {
     if (isNaN(date.getTime())) return null;
     const [year, month, day] = baseDateStr.split('-');
     const baseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    baseDate.setHours(0,0,0,0);
+    baseDate.setHours(0, 0, 0, 0);
     return (date.getTime() - baseDate.getTime()) / (1000 * 60 * 60);
   };
 
@@ -62,8 +62,8 @@ const Attendance: React.FC = () => {
 
   const filteredData = useMemo(() => {
     return attendanceData.filter(item => {
-      const matchesSearch = item.employee.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           item.employee.registerId.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = item.employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.employee.registerId.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = selectedStatus === 'All Status' || item.completionStatus === selectedStatus;
       return matchesSearch && matchesStatus;
     });
@@ -147,17 +147,17 @@ const Attendance: React.FC = () => {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Date</label>
               <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl min-w-[200px] shadow-sm">
                 <CalendarIcon />
-                <input 
-                  type="date" 
-                  value={selectedDate} 
+                <input
+                  type="date"
+                  value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="text-sm font-bold outline-none w-full bg-transparent" 
+                  className="text-sm font-bold outline-none w-full bg-transparent"
                 />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Completion Status</label>
-              <select 
+              <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl min-w-[180px] text-sm font-bold outline-none appearance-none shadow-sm"
@@ -173,24 +173,24 @@ const Attendance: React.FC = () => {
 
         {/* Today's Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <SummaryCard 
-            title="Present Staff" 
-            value={stats.present} 
+          <SummaryCard
+            title="Present Staff"
+            value={stats.present}
             subtitle="Currently on duty"
             icon={<UsersIcon />}
             iconBg="bg-blue-50 text-[#003896]"
           />
-          <SummaryCard 
-            title="Total OT Hours" 
-            value={stats.totalOT.toFixed(1)} 
+          <SummaryCard
+            title="Total OT Hours"
+            value={stats.totalOT.toFixed(1)}
             subtitle="Extra hours recorded today"
             unit="Hrs"
             icon={<ClockIconLarge />}
             iconBg="bg-emerald-50 text-emerald-600"
           />
-          <SummaryCard 
-            title="Incomplete Entries" 
-            value={stats.incomplete} 
+          <SummaryCard
+            title="Incomplete Entries"
+            value={stats.incomplete}
             subtitle="Requires checkout or break-end"
             icon={<AlertIcon />}
             iconBg="bg-orange-50 text-orange-500"
@@ -203,7 +203,7 @@ const Attendance: React.FC = () => {
           <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
             <h3 className="text-xl font-black text-slate-900">Shift Roster & Calculations</h3>
             <div className="flex gap-2">
-              <span className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-400 uppercase">Standard: 12.0 Hrs</span>
+              <span className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-black text-slate-400 uppercase">Standard: 10.0 Hrs</span>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -280,7 +280,7 @@ const Attendance: React.FC = () => {
                         const bStartHour = getDecimalTimeRelative(item.breakStart, selectedDate);
                         const bEndHour = getDecimalTimeRelative(item.breakEnd, selectedDate);
 
-                        let intervals: {start: number, end: number}[] = [];
+                        let intervals: { start: number, end: number }[] = [];
                         if (entryHour !== null && exitHour !== null) {
                           if (bStartHour !== null && bEndHour !== null) {
                             intervals.push({ start: entryHour, end: bStartHour });
@@ -289,68 +289,72 @@ const Attendance: React.FC = () => {
                             intervals.push({ start: entryHour, end: exitHour });
                           }
                         }
-                        
+
                         let otThreshold = Infinity;
                         let accumulated = 0;
                         for (let i = 0; i < intervals.length; i++) {
                           const duration = intervals[i].end - intervals[i].start;
-                          if (accumulated + duration > 8) {
-                             otThreshold = intervals[i].start + (8 - accumulated);
-                             break;
+                          if (accumulated + duration > 10) {
+                            otThreshold = intervals[i].start + (10 - accumulated);
+                            break;
                           }
                           accumulated += duration;
                         }
 
                         return (
-                           <div className="flex items-center gap-[2px] justify-center">
-                              {Array.from({ length: 24 }).map((_, h) => {
-                                let fractionReg = 0;
-                                let fractionOT = 0;
-                                let isNightBlock = false;
-                                for (const inv of intervals) {
-                                  const overlapStart = Math.max(h, inv.start);
-                                  const overlapEnd = Math.min(h + 1, inv.end);
-                                  if (overlapEnd > overlapStart) {
-                                    if (overlapEnd <= otThreshold) {
-                                      fractionReg += (overlapEnd - overlapStart);
-                                    } else if (overlapStart >= otThreshold) {
-                                      fractionOT += (overlapEnd - overlapStart);
-                                    } else {
-                                      fractionReg += (otThreshold - overlapStart);
-                                      fractionOT += (overlapEnd - otThreshold);
-                                    }
-                                  }
-                                  // Determine night shift if the original interval started in evening/night or next day morning
-                                  if (inv.start >= 18 || inv.end <= 8 || inv.end > 24 || inv.start < 0) {
-                                    isNightBlock = true;
+                          <div className="flex items-center gap-[2px] justify-center">
+                            {Array.from({ length: 24 }).map((_, h) => {
+                              let fractionRegForTooltip = 0;
+                              let fractionOTForTooltip = 0;
+                              let isVisuallyActive = false;
+                              let isVisuallyOT = false;
+                              let isNightBlock = false;
+
+                              for (const inv of intervals) {
+                                const overlapStart = Math.max(h, inv.start);
+                                const overlapEnd = Math.min(h + 1, inv.end);
+                                if (overlapEnd > overlapStart) {
+                                  if (overlapEnd <= otThreshold) {
+                                    fractionRegForTooltip += (overlapEnd - overlapStart);
+                                  } else if (overlapStart >= otThreshold) {
+                                    fractionOTForTooltip += (overlapEnd - overlapStart);
+                                  } else {
+                                    fractionRegForTooltip += (otThreshold - overlapStart);
+                                    fractionOTForTooltip += (overlapEnd - otThreshold);
                                   }
                                 }
-                                
-                                const hasReg = fractionReg > 0;
-                                const hasOT = fractionOT > 0;
 
-                                return (
-                                  <div key={h} className="relative w-3 h-5 bg-slate-100 rounded-sm overflow-hidden flex-shrink-0 shadow-inner group flex">
-                                    {hasReg && (
-                                      <div 
-                                        className={`transition-all duration-300 ${isNightBlock ? 'bg-indigo-400' : 'bg-emerald-400'}`}
-                                        style={{ width: `${fractionReg * 100}%` }}
-                                      />
-                                    )}
-                                    {hasOT && (
-                                      <div 
-                                        className={`transition-all duration-300 bg-orange-400`}
-                                        style={{ width: `${fractionOT * 100}%` }}
-                                      />
-                                    )}
-                                    {/* Tooltip for hover */}
-                                    <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-white text-[8px] font-bold rounded pointer-events-none whitespace-nowrap z-50">
-                                      {h}:00 - {h+1}:00 (Reg: {(fractionReg * 60).toFixed(0)}m, OT: {(fractionOT * 60).toFixed(0)}m)
-                                    </div>
+                                if (h >= Math.floor(inv.start) && h <= Math.floor(inv.end)) {
+                                  isVisuallyActive = true;
+                                  if (h >= Math.floor(otThreshold)) {
+                                    isVisuallyOT = true;
+                                  }
+                                }
+
+                                if (inv.start >= 18 || inv.end <= 8 || inv.end > 24 || inv.start < 0) {
+                                  isNightBlock = true;
+                                }
+                              }
+
+                              return (
+                                <div key={h} className="relative w-3 h-5 bg-slate-100 rounded-sm overflow-hidden flex-shrink-0 shadow-inner group flex">
+                                  {isVisuallyActive && !isVisuallyOT && (
+                                    <div 
+                                      className={`transition-all duration-300 w-full ${isNightBlock ? 'bg-indigo-400' : 'bg-emerald-400'}`}
+                                    />
+                                  )}
+                                  {isVisuallyActive && isVisuallyOT && (
+                                    <div 
+                                      className={`transition-all duration-300 w-full bg-orange-400`}
+                                    />
+                                  )}
+                                  <div className="absolute opacity-0 group-hover:opacity-100 bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-slate-800 text-white text-[8px] font-bold rounded pointer-events-none whitespace-nowrap z-50">
+                                    {h}:00 - {h+1}:00 (Reg: {(fractionRegForTooltip * 60).toFixed(0)}m, OT: {(fractionOTForTooltip * 60).toFixed(0)}m)
                                   </div>
-                                );
-                              })}
-                           </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         );
                       })()}
                     </td>
@@ -380,7 +384,7 @@ const Attendance: React.FC = () => {
             <form onSubmit={handleManualEntry} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="space-y-2 lg:col-span-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Staff Member</label>
-                <select 
+                <select
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                   value={formData.employeeId}
                   onChange={(e) => {
@@ -410,10 +414,10 @@ const Attendance: React.FC = () => {
 
               <div className="space-y-2 lg:col-span-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shift Status</label>
-                <select 
+                <select
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                   value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 >
                   <option value="PRESENT">Present</option>
                   <option value="ABSENT">Absent</option>
@@ -422,57 +426,57 @@ const Attendance: React.FC = () => {
 
               <div className="space-y-2 lg:col-span-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nature of Work</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={formData.natureOfWork}
-                  onChange={(e) => setFormData({...formData, natureOfWork: e.target.value})}
-                  placeholder="e.g. Ward Duty" 
+                  onChange={(e) => setFormData({ ...formData, natureOfWork: e.target.value })}
+                  placeholder="e.g. Ward Duty"
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Check-In</label>
-                <input 
-                  type="time" 
+                <input
+                  type="time"
                   value={formData.checkIn}
-                  onChange={(e) => setFormData({...formData, checkIn: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })}
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Break Start</label>
-                <input 
-                  type="time" 
+                <input
+                  type="time"
                   value={formData.breakStart}
-                  onChange={(e) => setFormData({...formData, breakStart: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, breakStart: e.target.value })}
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Break End</label>
-                <input 
-                  type="time" 
+                <input
+                  type="time"
                   value={formData.breakEnd}
-                  onChange={(e) => setFormData({...formData, breakEnd: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, breakEnd: e.target.value })}
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Check-Out</label>
-                <input 
-                  type="time" 
+                <input
+                  type="time"
                   value={formData.checkOut}
-                  onChange={(e) => setFormData({...formData, checkOut: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })}
                   className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
                 />
               </div>
 
               <div className="lg:col-span-4 pt-6 flex justify-end">
-                <button 
+                <button
                   type="submit"
                   className="px-16 py-4 bg-[#003896] text-white rounded-2xl text-sm font-black shadow-xl shadow-blue-900/20 hover:bg-[#002d7a] transition-all active:scale-95 uppercase tracking-widest"
                 >
@@ -488,8 +492,8 @@ const Attendance: React.FC = () => {
                   <span className="text-[10px] font-black text-slate-400 uppercase">Est. Total Hours</span>
                   <p className="text-lg font-black text-slate-900">
                     {(() => {
-                      const start = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1])/60 : 0;
-                      const end = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1])/60 : 0;
+                      const start = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1]) / 60 : 0;
+                      const end = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1]) / 60 : 0;
                       let diff = end - start;
                       if (diff < 0) diff += 24;
                       return diff.toFixed(1);
@@ -500,8 +504,8 @@ const Attendance: React.FC = () => {
                   <span className="text-[10px] font-black text-slate-400 uppercase">Est. Break Dur.</span>
                   <p className="text-lg font-black text-slate-900">
                     {(() => {
-                      const start = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1])/60 : 0;
-                      const end = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1])/60 : 0;
+                      const start = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1]) / 60 : 0;
+                      const end = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1]) / 60 : 0;
                       let diff = end - start;
                       if (diff < 0) diff += 24;
                       return diff.toFixed(1);
@@ -512,11 +516,11 @@ const Attendance: React.FC = () => {
                   <span className="text-[10px] font-black text-[#003896] uppercase">Est. Net Hours</span>
                   <p className="text-lg font-black text-[#003896]">
                     {(() => {
-                      const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1])/60 : 0;
-                      const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1])/60 : 0;
+                      const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1]) / 60 : 0;
+                      const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1]) / 60 : 0;
                       let total = e1 - s1; if (total < 0) total += 24;
-                      const s2 = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1])/60 : 0;
-                      const e2 = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1])/60 : 0;
+                      const s2 = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1]) / 60 : 0;
+                      const e2 = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1]) / 60 : 0;
                       let brk = e2 - s2; if (brk < 0) brk += 24;
                       return Math.max(0, total - brk).toFixed(1);
                     })()}h
@@ -526,14 +530,14 @@ const Attendance: React.FC = () => {
                   <span className="text-[10px] font-black text-orange-500 uppercase">Est. OT Hours</span>
                   <p className="text-lg font-black text-orange-500">
                     {(() => {
-                      const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1])/60 : 0;
-                      const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1])/60 : 0;
+                      const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1]) / 60 : 0;
+                      const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1]) / 60 : 0;
                       let total = e1 - s1; if (total < 0) total += 24;
-                      const s2 = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1])/60 : 0;
-                      const e2 = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1])/60 : 0;
+                      const s2 = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1]) / 60 : 0;
+                      const e2 = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1]) / 60 : 0;
                       let brk = e2 - s2; if (brk < 0) brk += 24;
                       const net = Math.max(0, total - brk);
-                      const ot = Math.max(0, net - 8);
+                      const ot = Math.max(0, net - 10);
                       return ot.toFixed(1);
                     })()}h
                   </p>

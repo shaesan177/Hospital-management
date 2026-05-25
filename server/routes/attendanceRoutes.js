@@ -10,9 +10,9 @@ const calculateHours = (startMs, endMs) => {
   return diff > 0 ? diff : 0;
 };
 
-// Overtime is any Net Worked hours exceeding standard 8-hour shift.
+// Overtime is any Net Worked hours exceeding standard 10-hour shift.
 const calculateOT = (netHours) => {
-  return netHours > 8 ? netHours - 8 : 0;
+  return netHours > 10 ? netHours - 10 : 0;
 };
 
 // Get attendance for all employees by date

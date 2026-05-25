@@ -9,7 +9,8 @@ const employeeSchema = new mongoose.Schema({
   status: { type: String, enum: ['ON-DUTY', 'OFF-DUTY', 'ON-LEAVE'], default: 'ON-DUTY' },
   fatherName: { type: String },
   sex: { type: String, enum: ['Male', 'Female', 'Other'] },
-  avatar: { type: String }
+  avatar: { type: String },
+  basicSalary: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export default mongoose.model('Employee', employeeSchema);
