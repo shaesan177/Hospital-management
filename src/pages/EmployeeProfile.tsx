@@ -21,6 +21,9 @@ const EmployeeProfile: React.FC = () => {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -63,6 +66,26 @@ const EmployeeProfile: React.FC = () => {
       fetchEmployee();
     }
   }, [id]);
+
+  const fetchAttendanceHistory = async () => {
+    setAttendanceLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/attendance/history/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAttendanceHistory(data);
+      }
+    } catch (error) {
+      console.error('Error fetching attendance history:', error);
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
+  const handleOpenAttendanceReport = () => {
+    fetchAttendanceHistory();
+    setIsAttendanceModalOpen(true);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -300,6 +323,10 @@ const EmployeeProfile: React.FC = () => {
             <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
               <h4 className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">Quick Actions</h4>
               <div className="space-y-3">
+                <button onClick={handleOpenAttendanceReport} className="w-full py-3 px-4 bg-slate-50 text-slate-700 rounded-xl text-sm font-bold text-left hover:bg-slate-100 transition-colors flex items-center justify-between group">
+                  View Attendance Report
+                  <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
+                </button>
                 <button className="w-full py-3 px-4 bg-slate-50 text-slate-700 rounded-xl text-sm font-bold text-left hover:bg-slate-100 transition-colors flex items-center justify-between group">
                   Generate Salary Slip
                   <svg className="w-4 h-4 text-slate-300 group-hover:text-[#003896] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
@@ -384,6 +411,58 @@ const EmployeeProfile: React.FC = () => {
                   <button type="submit" className="flex-1 px-6 py-3 bg-[#003896] text-white rounded-xl font-bold hover:bg-[#002d7a] transition-colors shadow-lg shadow-[#003896]/20">Save Changes</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Attendance Report Modal */}
+        {isAttendanceModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+              <div className="bg-[#003896] p-6 text-white flex justify-between items-center shrink-0">
+                <h2 className="text-xl font-bold">Attendance Report - {employee.name}</h2>
+                <button onClick={() => setIsAttendanceModalOpen(false)} className="hover:bg-white/10 p-2 rounded-lg transition-colors">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto flex-1">
+                {attendanceLoading ? (
+                  <div className="flex justify-center items-center h-32">
+                    <div className="w-8 h-8 border-4 border-[#003896] border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : attendanceHistory.length === 0 ? (
+                  <div className="text-center py-10 text-slate-500 font-medium">No attendance records found for this employee.</div>
+                ) : (
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100">
+                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Check In</th>
+                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Check Out</th>
+                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Hrs</th>
+                        <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">OT Hrs</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {attendanceHistory.map((record) => (
+                        <tr key={record._id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 text-sm font-bold text-slate-900">{new Date(record.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold ${record.status === 'PRESENT' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                              {record.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600 font-medium">{record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '—'}</td>
+                          <td className="px-4 py-3 text-sm text-slate-600 font-medium">{record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '—'}</td>
+                          <td className="px-4 py-3 text-sm font-bold text-[#003896]">{record.totalHours ? record.totalHours.toFixed(1) + 'h' : '—'}</td>
+                          <td className="px-4 py-3 text-sm font-bold text-orange-500">{record.otHours ? '+' + record.otHours.toFixed(1) + 'h' : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           </div>
         )}

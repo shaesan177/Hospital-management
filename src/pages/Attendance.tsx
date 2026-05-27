@@ -33,13 +33,10 @@ const Attendance: React.FC = () => {
     return (date.getTime() - baseDate.getTime()) / (1000 * 60 * 60);
   };
 
-  // Form State
   const [formData, setFormData] = useState({
     employeeId: '',
     natureOfWork: '',
     checkIn: '',
-    breakStart: '',
-    breakEnd: '',
     checkOut: '',
     status: 'PRESENT'
   });
@@ -83,15 +80,10 @@ const Attendance: React.FC = () => {
       return;
     }
 
-    // Validation
     const checkInDec = formData.checkIn ? parseInt(formData.checkIn.replace(':', '')) : 0;
     const checkOutDec = formData.checkOut ? parseInt(formData.checkOut.replace(':', '')) : 0;
-    const breakStartDec = formData.breakStart ? parseInt(formData.breakStart.replace(':', '')) : 0;
-    const breakEndDec = formData.breakEnd ? parseInt(formData.breakEnd.replace(':', '')) : 0;
 
     const isCheckOutNextDay = Boolean(formData.checkOut && checkOutDec < checkInDec);
-    const isBreakStartNextDay = Boolean(formData.breakStart && breakStartDec < checkInDec);
-    const isBreakEndNextDay = Boolean(formData.breakEnd && (breakEndDec < breakStartDec || (isBreakStartNextDay && breakEndDec >= breakStartDec)));
 
     const createDateStr = (timeStr: string, isNextDay: boolean = false) => {
       if (!timeStr) return null;
@@ -107,8 +99,6 @@ const Attendance: React.FC = () => {
       const payload = {
         ...formData,
         checkIn: createDateStr(formData.checkIn, false),
-        breakStart: createDateStr(formData.breakStart, isBreakStartNextDay),
-        breakEnd: createDateStr(formData.breakEnd, isBreakEndNextDay),
         checkOut: createDateStr(formData.checkOut, isCheckOutNextDay),
         date: selectedDate
       };
@@ -120,8 +110,6 @@ const Attendance: React.FC = () => {
         employeeId: '',
         natureOfWork: '',
         checkIn: '',
-        breakStart: '',
-        breakEnd: '',
         checkOut: '',
         status: 'PRESENT'
       });
@@ -277,17 +265,10 @@ const Attendance: React.FC = () => {
                       {(() => {
                         const entryHour = getDecimalTimeRelative(item.checkIn, selectedDate);
                         const exitHour = getDecimalTimeRelative(item.checkOut, selectedDate);
-                        const bStartHour = getDecimalTimeRelative(item.breakStart, selectedDate);
-                        const bEndHour = getDecimalTimeRelative(item.breakEnd, selectedDate);
 
                         let intervals: { start: number, end: number }[] = [];
                         if (entryHour !== null && exitHour !== null) {
-                          if (bStartHour !== null && bEndHour !== null) {
-                            intervals.push({ start: entryHour, end: bStartHour });
-                            intervals.push({ start: bEndHour, end: exitHour });
-                          } else {
-                            intervals.push({ start: entryHour, end: exitHour });
-                          }
+                          intervals.push({ start: entryHour, end: exitHour });
                         }
 
                         let otThreshold = Infinity;
@@ -395,8 +376,6 @@ const Attendance: React.FC = () => {
                       employeeId: empId,
                       natureOfWork: record ? record.natureOfWork : '',
                       checkIn: record ? formatTimeForInput(record.checkIn) : '',
-                      breakStart: record ? formatTimeForInput(record.breakStart) : '',
-                      breakEnd: record ? formatTimeForInput(record.breakEnd) : '',
                       checkOut: record ? formatTimeForInput(record.checkOut) : '',
                       status: record ? record.status : 'PRESENT'
                     });
@@ -445,25 +424,7 @@ const Attendance: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Break Start</label>
-                <input
-                  type="time"
-                  value={formData.breakStart}
-                  onChange={(e) => setFormData({ ...formData, breakStart: e.target.value })}
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
-                />
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Break End</label>
-                <input
-                  type="time"
-                  value={formData.breakEnd}
-                  onChange={(e) => setFormData({ ...formData, breakEnd: e.target.value })}
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-[#003896] focus:bg-white transition-all text-sm font-bold"
-                />
-              </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Check-Out</label>
@@ -501,28 +462,13 @@ const Attendance: React.FC = () => {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Est. Break Dur.</span>
-                  <p className="text-lg font-black text-slate-900">
-                    {(() => {
-                      const start = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1]) / 60 : 0;
-                      const end = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1]) / 60 : 0;
-                      let diff = end - start;
-                      if (diff < 0) diff += 24;
-                      return diff.toFixed(1);
-                    })()}h
-                  </p>
-                </div>
-                <div className="space-y-1">
                   <span className="text-[10px] font-black text-[#003896] uppercase">Est. Net Hours</span>
                   <p className="text-lg font-black text-[#003896]">
                     {(() => {
                       const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1]) / 60 : 0;
                       const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1]) / 60 : 0;
                       let total = e1 - s1; if (total < 0) total += 24;
-                      const s2 = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1]) / 60 : 0;
-                      const e2 = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1]) / 60 : 0;
-                      let brk = e2 - s2; if (brk < 0) brk += 24;
-                      return Math.max(0, total - brk).toFixed(1);
+                      return Math.max(0, total).toFixed(1);
                     })()}h
                   </p>
                 </div>
@@ -533,10 +479,7 @@ const Attendance: React.FC = () => {
                       const s1 = formData.checkIn ? parseInt(formData.checkIn.split(':')[0]) + parseInt(formData.checkIn.split(':')[1]) / 60 : 0;
                       const e1 = formData.checkOut ? parseInt(formData.checkOut.split(':')[0]) + parseInt(formData.checkOut.split(':')[1]) / 60 : 0;
                       let total = e1 - s1; if (total < 0) total += 24;
-                      const s2 = formData.breakStart ? parseInt(formData.breakStart.split(':')[0]) + parseInt(formData.breakStart.split(':')[1]) / 60 : 0;
-                      const e2 = formData.breakEnd ? parseInt(formData.breakEnd.split(':')[0]) + parseInt(formData.breakEnd.split(':')[1]) / 60 : 0;
-                      let brk = e2 - s2; if (brk < 0) brk += 24;
-                      const net = Math.max(0, total - brk);
+                      const net = Math.max(0, total);
                       const ot = Math.max(0, net - 10);
                       return ot.toFixed(1);
                     })()}h

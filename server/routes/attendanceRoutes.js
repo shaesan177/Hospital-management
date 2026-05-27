@@ -40,12 +40,8 @@ router.get('/', async (req, res) => {
         employee: emp,
         status: record ? record.status : 'ABSENT',
         checkIn: record ? record.checkIn : null,
-        breakStart: record ? record.breakStart : null,
-        breakEnd: record ? record.breakEnd : null,
         checkOut: record ? record.checkOut : null,
         totalHours: record ? record.totalHours : 0,
-        breakDuration: record ? record.breakDuration : 0,
-        netHours: record ? record.netHours : 0,
         otHours: record ? record.otHours : 0,
         natureOfWork: record ? record.natureOfWork : emp.designation,
         completionStatus: record ? record.completionStatus : 'Pending',
@@ -59,21 +55,30 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get attendance history for a specific employee
+router.get('/history/:employeeId', async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const records = await Attendance.find({ employee: employeeId }).sort({ date: -1 });
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Update attendance (Manual Entry)
 router.post('/', async (req, res) => {
   try {
-    const { employeeId, date, status, checkIn, breakStart, breakEnd, checkOut, natureOfWork } = req.body;
+    const { employeeId, date, status, checkIn, checkOut, natureOfWork } = req.body;
     
     // Calculations
     const totalHours = calculateHours(checkIn, checkOut);
-    const breakDuration = calculateHours(breakStart, breakEnd);
-    const netHours = Math.max(0, totalHours - breakDuration);
-    const otHours = calculateOT(netHours);
+    const otHours = calculateOT(totalHours);
 
     // Completion Status logic
     let completionStatus = 'Pending';
     if (status === 'PRESENT') {
-      if (checkIn && checkOut && breakStart && breakEnd) {
+      if (checkIn && checkOut) {
         completionStatus = 'Completed';
       } else {
         completionStatus = 'Incomplete';
@@ -85,10 +90,8 @@ router.post('/', async (req, res) => {
       { 
         status, 
         checkIn: checkIn ? new Date(checkIn) : null, 
-        breakStart: breakStart ? new Date(breakStart) : null, 
-        breakEnd: breakEnd ? new Date(breakEnd) : null, 
         checkOut: checkOut ? new Date(checkOut) : null, 
-        totalHours, breakDuration, netHours, otHours,
+        totalHours, otHours,
         natureOfWork, completionStatus
       },
       { upsert: true, new: true }
