@@ -4,26 +4,51 @@ import Layout from '../components/Layout';
 const Payroll: React.FC = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  const fetchPayroll = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll?month=${selectedMonth}&year=${selectedYear}`);
+      const data = await response.json();
+      setEmployees(data);
+    } catch (error) {
+      console.error('Error fetching payroll:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPayroll = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll`);
-        const data = await response.json();
-        setEmployees(data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching payroll:', error);
-        setLoading(false);
-      }
-    };
     fetchPayroll();
-  }, []);
+  }, [selectedMonth, selectedYear]);
 
-  const totalGross = employees.reduce((sum, emp) => sum + (emp.gross || 0), 0);
-  const totalOT = employees.reduce((sum, emp) => sum + (emp.otPay || 0), 0);
-  const totalDeductions = employees.reduce((sum, emp) => sum + (emp.deductions || 0), 0);
-  const totalNet = employees.reduce((sum, emp) => sum + (emp.net || 0), 0);
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month: selectedMonth, year: selectedYear })
+      });
+      if (response.ok) {
+        fetchPayroll();
+      }
+    } catch (error) {
+      console.error('Error generating payroll:', error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const totalGross = employees.reduce((sum, emp) => sum + (Number(emp.gross) || 0), 0);
+  const totalOT = employees.reduce((sum, emp) => sum + (Number(emp.otPay) || 0), 0);
+  const totalOTHours = employees.reduce((sum, emp) => sum + (Number(emp.otHours) || 0), 0);
+  const totalDeductions = employees.reduce((sum, emp) => sum + (Number(emp.deductions) || 0), 0);
+  const totalDeductionHours = employees.reduce((sum, emp) => sum + (Number(emp.deductionHours) || 0), 0);
+  const totalNet = employees.reduce((sum, emp) => sum + (Number(emp.net) || 0), 0);
 
   const stats = [
     { label: 'TOTAL GROSS', value: `₹${totalGross.toLocaleString(undefined, {minimumFractionDigits: 2})}`, trend: 'Current Month', icon: <TrendIcon />, color: 'text-emerald-500' },
@@ -41,16 +66,39 @@ const Payroll: React.FC = () => {
             <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
               <span>FINANCIAL MANAGEMENT</span>
             </div>
-            <h1 className="text-3xl font-black text-slate-900">October 2024 Payroll Cycle</h1>
+            <h1 className="text-3xl font-black text-slate-900">Payroll Cycle</h1>
+            <div className="flex gap-4 mt-3">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-[#003896]"
+              >
+                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
+                  <option key={i} value={i}>{m}</option>
+                ))}
+              </select>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-[#003896]"
+              >
+                {[2023, 2024, 2025, 2026].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button className="flex justify-center items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm w-full sm:w-auto">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               Export Register
             </button>
-            <button className="flex justify-center items-center gap-2 px-5 py-2.5 bg-[#003896] rounded-xl text-sm font-bold text-white hover:bg-[#002d7a] transition-all shadow-lg shadow-blue-900/20 w-full sm:w-auto">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-              Process Payments
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex justify-center items-center gap-2 px-5 py-2.5 bg-[#003896] rounded-xl text-sm font-bold text-white hover:bg-[#002d7a] transition-all shadow-lg shadow-blue-900/20 w-full sm:w-auto disabled:opacity-50"
+            >
+              {generating ? 'Generating...' : 'Generate Payroll'}
             </button>
           </div>
         </div>
@@ -100,11 +148,13 @@ const Payroll: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50/50">
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest min-w-[200px]">Employee & Role</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Basic Pay</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">OT Pay</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Gross Pay</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Deductions</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[120px]">Net Payable</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Base Salary</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">OT Hrs</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">OT Amount</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Daily OT (Avg)</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Ded. Hrs</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[100px]">Ded. Amount</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right min-w-[120px]">Final Salary</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center min-w-[100px]">Status</th>
                 </tr>
               </thead>
@@ -125,9 +175,21 @@ const Payroll: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-slate-700 text-right">₹{(emp.basic || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-slate-700 text-right">₹{(emp.otPay || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{(emp.gross || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td className="px-6 py-5 text-sm font-bold text-rose-500 text-right">(₹{(emp.deductions || 0).toLocaleString(undefined, {minimumFractionDigits: 2})})</td>
+                    <td className="px-6 py-5 text-sm font-bold text-[#003896] text-right">{(emp.otHours || 0).toFixed(1)}h</td>
+                    <td className="px-6 py-5 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-bold text-slate-700">₹{(emp.otPay || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                        <span className="text-[9px] font-bold text-slate-400">@ ₹{emp.otRatePerHour || 0}/hr</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-sm font-bold text-[#003896] text-right">₹{((emp.otPay || 0) / (emp.totalWorkingDays || 1)).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-bold text-rose-500 text-right">{(emp.deductionHours || 0).toFixed(1)}h</td>
+                    <td className="px-6 py-5 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm font-bold text-rose-500">-₹{(emp.deductions || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                        <span className="text-[9px] font-bold text-slate-400">@ ₹{emp.deductionRatePerHour || 0}/hr</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-5 text-sm font-black text-[#003896] text-right">₹{(emp.net || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td className="px-6 py-5 text-center">
                       <span className={`px-2 py-1 rounded-md text-[9px] font-black tracking-wider border ${emp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
@@ -146,9 +208,11 @@ const Payroll: React.FC = () => {
                       <h4 className="text-base font-black text-slate-900">Totals</h4>
                     </td>
                     <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{employees.reduce((acc, emp) => acc + (emp.basic || 0), 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td className="px-6 py-5 text-sm font-black text-[#003896] text-right">{totalOTHours.toFixed(1)}h</td>
                     <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{totalOT.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{totalGross.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td className="px-6 py-5 text-sm font-black text-rose-600 text-right">(₹{totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})})</td>
+                    <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">—</td>
+                    <td className="px-6 py-5 text-sm font-black text-rose-600 text-right">{totalDeductionHours.toFixed(1)}h</td>
+                    <td className="px-6 py-5 text-sm font-black text-rose-600 text-right">-₹{totalDeductions.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td className="px-6 py-5 text-base font-black text-[#003896] text-right">₹{totalNet.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td></td>
                   </tr>

@@ -17,7 +17,10 @@ const Employees: React.FC = () => {
     status: 'ON-DUTY',
     fatherName: '',
     sex: 'Male',
-    basicSalary: ''
+    basicSalary: '',
+    workingHoursPerDay: 10,
+    otRatePerHour: '',
+    deductionRatePerHour: ''
   });
 
   const fetchEmployees = async () => {
@@ -53,7 +56,10 @@ const Employees: React.FC = () => {
       status: 'ON-DUTY',
       fatherName: '',
       sex: 'Male',
-      basicSalary: ''
+      basicSalary: '',
+      workingHoursPerDay: 10,
+      otRatePerHour: '',
+      deductionRatePerHour: ''
     });
     setIsModalOpen(true);
   };
@@ -70,7 +76,10 @@ const Employees: React.FC = () => {
       status: emp.status,
       fatherName: emp.fatherName || '',
       sex: emp.sex || 'Male',
-      basicSalary: emp.basicSalary || ''
+      basicSalary: emp.basicSalary || '',
+      workingHoursPerDay: emp.workingHoursPerDay || 10,
+      otRatePerHour: emp.otRatePerHour || '',
+      deductionRatePerHour: emp.deductionRatePerHour || ''
     });
     setIsModalOpen(true);
   };
@@ -117,7 +126,10 @@ const Employees: React.FC = () => {
           status: 'ON-DUTY',
           fatherName: '',
           sex: 'Male',
-          basicSalary: ''
+          basicSalary: '',
+          workingHoursPerDay: 10,
+          otRatePerHour: '',
+          deductionRatePerHour: ''
         });
       }
     } catch (error) {
@@ -258,6 +270,18 @@ const Employees: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Basic Salary (₹)</label>
                   <input required type="number" name="basicSalary" value={formData.basicSalary} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. 15000" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Working Hrs / Day</label>
+                  <input required type="number" name="workingHoursPerDay" value={formData.workingHoursPerDay} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. 10" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">OT Amount / Hr (₹)</label>
+                  <input required type="number" name="otRatePerHour" value={formData.otRatePerHour} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. 150" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Deduction / Hr (₹)</label>
+                  <input required type="number" name="deductionRatePerHour" value={formData.deductionRatePerHour} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" placeholder="e.g. 100" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Father's Name</label>

@@ -64,7 +64,7 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <Layout title="Admin Control Panel" searchPlaceholder="Search audit logs...">
+    <Layout title="Admin Control Panel" hideSearch hideIcons>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
         <div className="col-span-full mb-4">
           <h1 className="text-3xl font-bold mb-2">Administrative Overview</h1>

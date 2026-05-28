@@ -10,7 +10,10 @@ const employeeSchema = new mongoose.Schema({
   fatherName: { type: String },
   sex: { type: String, enum: ['Male', 'Female', 'Other'] },
   avatar: { type: String },
-  basicSalary: { type: Number, default: 0 }
+  basicSalary: { type: Number, default: 0 },
+  workingHoursPerDay: { type: Number, default: 10 },
+  otRatePerHour: { type: Number, default: 0 },
+  deductionRatePerHour: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export default mongoose.model('Employee', employeeSchema);

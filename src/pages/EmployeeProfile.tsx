@@ -13,6 +13,10 @@ interface Employee {
   fatherName: string;
   sex: string;
   createdAt?: string;
+  basicSalary?: number;
+  workingHoursPerDay?: number;
+  otRatePerHour?: number;
+  deductionRatePerHour?: number;
 }
 
 const EmployeeProfile: React.FC = () => {
@@ -20,6 +24,7 @@ const EmployeeProfile: React.FC = () => {
   const navigate = useNavigate();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPayroll, setCurrentPayroll] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
@@ -32,7 +37,11 @@ const EmployeeProfile: React.FC = () => {
     designation: '',
     status: 'ON-DUTY',
     fatherName: '',
-    sex: 'Male'
+    sex: 'Male',
+    basicSalary: 0,
+    workingHoursPerDay: 10,
+    otRatePerHour: 0,
+    deductionRatePerHour: 0
   });
 
   const fetchEmployee = async () => {
@@ -49,7 +58,11 @@ const EmployeeProfile: React.FC = () => {
           designation: data.designation,
           status: data.status,
           fatherName: data.fatherName || '',
-          sex: data.sex || 'Male'
+          sex: data.sex || 'Male',
+          basicSalary: data.basicSalary || 0,
+          workingHoursPerDay: data.workingHoursPerDay || 10,
+          otRatePerHour: data.otRatePerHour || 0,
+          deductionRatePerHour: data.deductionRatePerHour || 0
         });
       } else {
         console.error('Failed to fetch employee');
@@ -61,9 +74,24 @@ const EmployeeProfile: React.FC = () => {
     }
   };
 
+  const fetchPayroll = async () => {
+    try {
+      const d = new Date();
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll?month=${d.getMonth()}&year=${d.getFullYear()}`);
+      if (response.ok) {
+        const data = await response.json();
+        const myPayroll = data.find((p: any) => p.employeeId === id);
+        setCurrentPayroll(myPayroll);
+      }
+    } catch (error) {
+      console.error('Error fetching payroll data:', error);
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchEmployee();
+      fetchPayroll();
     }
   }, [id]);
 
@@ -291,6 +319,62 @@ const EmployeeProfile: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Payroll Configuration */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Payroll Configuration</h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-y-8 gap-x-12">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Monthly Salary</span>
+                  <p className="text-sm font-bold text-slate-700">₹{(employee.basicSalary || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Working Hrs / Day</span>
+                  <p className="text-sm font-bold text-slate-700">{employee.workingHoursPerDay || 10} Hours</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">OT Amount / Hr</span>
+                  <p className="text-sm font-bold text-slate-700">₹{(employee.otRatePerHour || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Deduction / Hr</span>
+                  <p className="text-sm font-bold text-slate-700">₹{(employee.deductionRatePerHour || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Current Month Earnings */}
+            {currentPayroll && (
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Current Month Earnings (Est.)</h3>
+              </div>
+
+              <div className="grid grid-cols-3 gap-y-8 gap-x-6">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Total OT Hrs</span>
+                  <p className="text-sm font-bold text-[#003896]">{currentPayroll.otHours?.toFixed(1) || '0.0'}h</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Total OT Amount</span>
+                  <p className="text-sm font-bold text-slate-700">₹{(currentPayroll.otPay || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Net Payable</span>
+                  <p className="text-sm font-black text-emerald-600">₹{(currentPayroll.net || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                </div>
+              </div>
+            </div>
+            )}
           </div>
 
           {/* Quick Stats / Actions */}
@@ -405,6 +489,26 @@ const EmployeeProfile: React.FC = () => {
                     <option>OFF-DUTY</option>
                     <option>ON-LEAVE</option>
                   </select>
+                </div>
+                
+                {/* Payroll Config Inputs */}
+                <div className="col-span-2 mt-4 pt-4 border-t border-slate-100"><h3 className="text-sm font-bold text-slate-900">Payroll Configuration</h3></div>
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Monthly Base Salary</label>
+                  <input type="number" name="basicSalary" value={formData.basicSalary} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Working Hours / Day</label>
+                  <input type="number" name="workingHoursPerDay" value={formData.workingHoursPerDay} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">OT Rate / Hour</label>
+                  <input type="number" name="otRatePerHour" value={formData.otRatePerHour} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Deduction Rate / Hour</label>
+                  <input type="number" name="deductionRatePerHour" value={formData.deductionRatePerHour} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#003896] text-sm font-medium" />
                 </div>
                 <div className="col-span-2 flex gap-4 pt-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
